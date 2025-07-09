@@ -165,7 +165,7 @@ export default function InvoiceTable() {
                       <Badge variant="light" color="warning" size="sm">Checked</Badge>
                     </td>
                     <td className="px-6 py-4">{row.dateTime}</td>
-                    <td className="px-6 py-4 text-right relative">
+                    <td className="px-6 py-4 text-center relative">
                       <button
                         className="p-2 rounded-full hover:bg-gray-100 dropdown-toggle"
                         onClick={() => setOpenDropdown(openDropdown === idx ? null : idx)}
