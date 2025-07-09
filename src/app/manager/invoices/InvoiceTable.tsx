@@ -5,6 +5,9 @@ import { MoreDotIcon, EyeIcon, DollarLineIcon, EyeCloseIcon, TrashBinIcon } from
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import InvoiceDetailsModal from "./InvoiceDetailsModal";
+import MarkAsFinancedModal from "./MarkAsFinancedModal";
+import RejectFinanceModal from "./RejectFinanceModal";
+import DeleteInvoiceModal from "./DeleteInvoiceModal";
 
 const TABS = [
   { label: "All", count: 150, color: "light" },
@@ -48,6 +51,9 @@ export default function InvoiceTable() {
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
+  const [financeModalOpen, setFinanceModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   // Filter logic can be added here based on activeTab and search
   const filteredData = TABLE_DATA.filter(row => {
@@ -59,6 +65,24 @@ export default function InvoiceTable() {
   const handleView = (invoice: any) => {
     setSelectedInvoice(invoice);
     setModalOpen(true);
+    setOpenDropdown(null);
+  };
+
+  const handleMarkAsFinanced = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setFinanceModalOpen(true);
+    setOpenDropdown(null);
+  };
+
+  const handleRejectFinance = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setRejectModalOpen(true);
+    setOpenDropdown(null);
+  };
+
+  const handleDeleteInvoice = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setDeleteModalOpen(true);
     setOpenDropdown(null);
   };
 
@@ -147,13 +171,13 @@ export default function InvoiceTable() {
                       <DropdownItem onItemClick={() => handleView(row)} className="flex items-center gap-2 text-gray-700 hover:text-brand-600">
                         <EyeIcon className="w-5 h-5" /> View
                       </DropdownItem>
-                      <DropdownItem onItemClick={() => setOpenDropdown(null)} className="flex items-center gap-2 text-gray-700 hover:text-success-600">
+                      <DropdownItem onItemClick={() => handleMarkAsFinanced(row)} className="flex items-center gap-2 text-gray-700 hover:text-success-600">
                         <DollarLineIcon className="w-5 h-5" /> Mark as Financed
                       </DropdownItem>
-                      <DropdownItem onItemClick={() => setOpenDropdown(null)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
+                      <DropdownItem onItemClick={() => handleRejectFinance(row)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
                         <EyeCloseIcon className="w-5 h-5" /> Reject Finance
                       </DropdownItem>
-                      <DropdownItem onItemClick={() => setOpenDropdown(null)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
+                      <DropdownItem onItemClick={() => handleDeleteInvoice(row)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
                         <TrashBinIcon className="w-5 h-5" /> Delete Invoice
                       </DropdownItem>
                     </Dropdown>
@@ -164,7 +188,29 @@ export default function InvoiceTable() {
           </table>
         </div>
       </div>
-      <InvoiceDetailsModal open={modalOpen} onClose={() => setModalOpen(false)} invoice={selectedInvoice} />
+      <InvoiceDetailsModal 
+        open={modalOpen} 
+        onClose={() => setModalOpen(false)} 
+        invoice={selectedInvoice}
+        onMarkAsFinanced={() => setFinanceModalOpen(true)}
+        onRejectFinance={() => setRejectModalOpen(true)}
+      />
+      <MarkAsFinancedModal 
+        open={financeModalOpen} 
+        onClose={() => setFinanceModalOpen(false)} 
+      />
+      <RejectFinanceModal 
+        open={rejectModalOpen} 
+        onClose={() => setRejectModalOpen(false)} 
+        invoice={selectedInvoice}
+        onSubmit={() => setRejectModalOpen(false)}
+      />
+      <DeleteInvoiceModal 
+        open={deleteModalOpen} 
+        onClose={() => setDeleteModalOpen(false)} 
+        invoice={selectedInvoice}
+        onDelete={() => setDeleteModalOpen(false)}
+      />
     </>
   );
 } 

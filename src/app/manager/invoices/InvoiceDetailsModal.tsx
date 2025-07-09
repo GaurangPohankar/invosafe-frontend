@@ -7,9 +7,11 @@ interface InvoiceDetailsModalProps {
   open: boolean;
   onClose: () => void;
   invoice: any | null;
+  onMarkAsFinanced?: () => void;
+  onRejectFinance?: () => void;
 }
 
-export default function InvoiceDetailsModal({ open, onClose, invoice }: InvoiceDetailsModalProps) {
+export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFinanced, onRejectFinance }: InvoiceDetailsModalProps) {
   if (!invoice) return null;
 
   return (
@@ -34,7 +36,7 @@ export default function InvoiceDetailsModal({ open, onClose, invoice }: InvoiceD
               <div className="font-medium text-success-700">Mark Invoice as Financed</div>
               <div className="text-xs text-success-700">Give us few details above the financing details</div>
             </div>
-            <button className="px-4 py-2 rounded-lg bg-success-500 text-white font-medium text-sm hover:bg-success-600">Mark as Financed</button>
+            <button onClick={onMarkAsFinanced} className="px-4 py-2 rounded-lg bg-success-500 text-white font-medium text-sm hover:bg-success-600">Mark as Financed</button>
           </div>
         </div>
         {/* Details */}
@@ -86,7 +88,7 @@ export default function InvoiceDetailsModal({ open, onClose, invoice }: InvoiceD
         </div>
         {/* Footer */}
         <div className="px-8 py-4 border-t border-gray-100 flex justify-end">
-          <button className="flex items-center gap-2 px-5 py-2 rounded-lg bg-error-50 text-error-600 font-medium text-sm hover:bg-error-100">
+          <button onClick={onRejectFinance} className="flex items-center gap-2 px-5 py-2 rounded-lg bg-error-50 text-error-600 font-medium text-sm hover:bg-error-100">
             <EyeCloseIcon className="w-5 h-5" /> Reject Finance
           </button>
         </div>
