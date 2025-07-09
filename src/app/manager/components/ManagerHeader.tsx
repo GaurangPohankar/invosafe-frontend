@@ -1,7 +1,5 @@
 "use client";
-import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
-import NotificationDropdown from "@/components/header/NotificationDropdown";
-import UserDropdownManager from "@/components/header/UserDropdownManager";
+import UserDropdownManager from "@/app/manager/components/UserDropdownManager";
 import { useSidebar } from "@/context/SidebarContext";
 import Image from "next/image";
 import Link from "next/link";
