@@ -54,7 +54,7 @@ import BellIcon from "./bell.svg";
 import EmptyInvoiceIcon from "./empty-invoice.svg";
 
 export {
-  DownloadIcon,
+  DownloadIcon as UploadIcon,
   BellIcon,
   MoreDotIcon,
   FileIcon,
