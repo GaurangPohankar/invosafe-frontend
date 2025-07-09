@@ -93,7 +93,36 @@ export default function InvoiceTable() {
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 p-0 overflow-hidden min-h-[500px] flex flex-col">
-        
+        {/* Tabs */}
+        <div className="flex gap-2 px-6 pt-4 pb-4 border-b border-gray-100">
+          {TABS.map((tab) => (
+            <button
+              key={tab.label}
+              onClick={() => setActiveTab(tab.label)}
+              className={`relative px-3 py-1.5 font-medium text-sm focus:outline-none transition-colors
+                ${activeTab === tab.label
+                  ? "text-gray-900"
+                  : "text-gray-500 hover:text-gray-900"}
+              `}
+              style={{ background: "none" }}
+            >
+              {tab.label}
+              <span
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold
+                  ${tab.color === "warning" ? "bg-yellow-100 text-yellow-700" : ""}
+                  ${tab.color === "success" ? "bg-green-100 text-green-700" : ""}
+                  ${tab.color === "error" ? "bg-red-100 text-red-700" : ""}
+                  ${tab.color === "light" ? "bg-gray-100 text-gray-600" : ""}
+                `}
+              >
+                {tab.count}
+              </span>
+              {activeTab === tab.label && (
+                <span className="absolute left-0 -bottom-2 w-full h-1 bg-gray-900 rounded-t" />
+              )}
+            </button>
+          ))}
+        </div>
         {/* Table or Empty State */}
         {isEmpty ? (
           <div className="flex-1 flex flex-col items-center justify-center py-16">
