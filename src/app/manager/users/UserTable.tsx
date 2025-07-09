@@ -16,6 +16,7 @@ const USERS = [
   { id: 3, name: "Zain Geidt", email: "zain@email.com", status: "Active" },
 ];
 
+
 export default function UserTable({
   onResetPassword,
   onBlockUnblock,
@@ -46,7 +47,7 @@ export default function UserTable({
   const isEmpty = filteredUsers.length === 0;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-0 overflow-hidden min-h-[500px] flex flex-col">
+    <div className="bg-white rounded-xl border border-gray-200 p-0 flex flex-col">
       {/* Tabs */}
       <div className="flex gap-2 px-6 pt-4 pb-4 border-b border-gray-100">
         {TABS.map((tab) => (
@@ -89,7 +90,7 @@ export default function UserTable({
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-gray-50">
@@ -119,7 +120,7 @@ export default function UserTable({
                     <Dropdown
                       isOpen={openDropdown === idx}
                       onClose={() => setOpenDropdown(null)}
-                      className="w-48 p-2 mt-2"
+                      className="w-48 p-2 mt-2 -top-2"
                     >
                       <DropdownItem onItemClick={() => onResetPassword(user)} className="flex items-center gap-2 text-gray-700 hover:text-brand-600">
                         <LockIcon className="w-5 h-5" /> Reset Password
@@ -142,7 +143,7 @@ export default function UserTable({
               ))}
             </tbody>
           </table>
-        </div>
+        
       )}
     </div>
   );

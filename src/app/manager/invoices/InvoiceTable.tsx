@@ -92,7 +92,7 @@ export default function InvoiceTable() {
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-gray-200 p-0 overflow-hidden min-h-[500px] flex flex-col">
+      <div className="bg-white rounded-xl border border-gray-200 p-0 min-h-[500px] flex flex-col">
         {/* Tabs */}
         <div className="flex gap-2 px-6 pt-4 pb-4 border-b border-gray-100">
           {TABS.map((tab) => (
@@ -135,7 +135,7 @@ export default function InvoiceTable() {
             </div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="bg-gray-50">
@@ -172,11 +172,11 @@ export default function InvoiceTable() {
                       >
                         <MoreDotIcon className="w-5 h-5 text-gray-500" />
                       </button>
-                      <Dropdown
-                        isOpen={openDropdown === idx}
-                        onClose={() => setOpenDropdown(null)}
-                        className="w-48 p-2 mt-2"
-                      >
+                                          <Dropdown
+                      isOpen={openDropdown === idx}
+                      onClose={() => setOpenDropdown(null)}
+                      className="w-48 p-2 mt-2 -top-2"
+                    >
                         <DropdownItem onItemClick={() => handleView(row)} className="flex items-center gap-2 text-gray-700 hover:text-brand-600">
                           <EyeIcon className="w-5 h-5" /> View
                         </DropdownItem>
@@ -195,7 +195,7 @@ export default function InvoiceTable() {
                 ))}
               </tbody>
             </table>
-          </div>
+
         )}
       </div>
       <InvoiceDetailsModal 
