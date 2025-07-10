@@ -1,20 +1,29 @@
+"use client";
+import React, { useState } from "react";
 import type { Metadata } from "next";
-import React from "react";
+import BuyCreditsModal from "./BuyCreditsModal";
 
-export const metadata: Metadata = {
-  title: "Credits | InvoSafe - Invoice Management System",
-  description: "Manage account credits and billing",
-};
+
 
 export default function CreditsPage() {
+  const [availableCredits, setAvailableCredits] = useState(1250);
+  const [buyModalOpen, setBuyModalOpen] = useState(false);
+
+  const handleBuyCredits = (amount: number) => {
+    setAvailableCredits((prev) => prev + amount);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-title-md2 font-bold text-black dark:text-white">
           Credits & Billing
         </h2>
-        <button className="inline-flex items-center justify-center rounded-md bg-brand-500 px-6 py-2.5 text-center font-medium text-white hover:bg-brand-600">
-        +  Add Credits
+        <button
+          className="inline-flex items-center justify-center rounded-md bg-brand-500 px-6 py-2.5 text-center font-medium text-white hover:bg-brand-600"
+          onClick={() => setBuyModalOpen(true)}
+        >
+          +  Add Credits
         </button>
       </div>
 
@@ -25,7 +34,7 @@ export default function CreditsPage() {
           </h3>
           <div className="text-center">
             <div className="text-3xl font-bold text-brand-500 mb-2">
-              1,250
+              {availableCredits.toLocaleString()}
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Credits remaining
@@ -53,7 +62,7 @@ export default function CreditsPage() {
           </h3>
           <div className="text-center">
             <div className="text-3xl font-bold text-gray-700 dark:text-gray-300 mb-2">
-              $99
+            ₹99
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Due on Dec 15, 2024
@@ -96,7 +105,7 @@ export default function CreditsPage() {
                   -5
                 </td>
                 <td className="py-3 px-4 text-sm text-black dark:text-white">
-                  1,250
+                  {availableCredits.toLocaleString()}
                 </td>
               </tr>
               <tr className="border-b border-stroke dark:border-strokedark">
@@ -110,7 +119,7 @@ export default function CreditsPage() {
                   +500
                 </td>
                 <td className="py-3 px-4 text-sm text-black dark:text-white">
-                  1,255
+                  {(availableCredits - 5).toLocaleString()}
                 </td>
               </tr>
               <tr>
@@ -124,13 +133,14 @@ export default function CreditsPage() {
                   -10
                 </td>
                 <td className="py-3 px-4 text-sm text-black dark:text-white">
-                  755
+                  {(availableCredits - 5 - 500).toLocaleString()}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
+      <BuyCreditsModal open={buyModalOpen} onClose={() => setBuyModalOpen(false)} onBuy={handleBuyCredits} />
     </div>
   );
 } 
