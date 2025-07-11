@@ -11,6 +11,21 @@ interface LoginCredentials {
   password: string;
 }
 
+interface PasswordResetRequest {
+  email: string;
+}
+
+interface PasswordResetVerify {
+  email: string;
+  otp: string;
+  new_password: string;
+}
+
+interface PasswordResetResponse {
+  message: string;
+  success: boolean;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const authenticationApi = {
@@ -97,5 +112,43 @@ export const authenticationApi = {
 
   getUserRole(): string | null {
     return localStorage.getItem('role');
+  },
+
+  async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
+    const response = await fetch(`${API_BASE_URL}/password-reset/request`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to send password reset email');
+    }
+
+    return response.json();
+  },
+
+  async verifyPasswordReset(email: string, otp: string, newPassword: string): Promise<PasswordResetResponse> {
+    const response = await fetch(`${API_BASE_URL}/password-reset/verify`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        otp,
+        new_password: newPassword,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to reset password');
+    }
+
+    return response.json();
   },
 }; 
