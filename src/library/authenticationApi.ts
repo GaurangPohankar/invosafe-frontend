@@ -48,7 +48,25 @@ export const authenticationApi = {
     return data;
   },
 
-  logout(): void {
+  async logout(): Promise<void> {
+    const accessToken = localStorage.getItem('access_token');
+    
+    // Revoke the access token if it exists
+    if (accessToken && API_BASE_URL) {
+      try {
+        await fetch(`${API_BASE_URL}/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (error) {
+        // Continue with logout even if revoke fails
+        console.error('Failed to revoke token:', error);
+      }
+    }
+    
     // Clear authentication data from localStorage
     localStorage.removeItem('access_token');
     localStorage.removeItem('token_type');

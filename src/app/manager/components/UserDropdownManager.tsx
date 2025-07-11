@@ -2,11 +2,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Dropdown } from "../../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../../components/ui/dropdown/DropdownItem";
+import { authenticationApi } from "@/library/authenticationApi";
 
 export default function UserDropdownManager() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
 
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.stopPropagation();
@@ -16,6 +20,20 @@ export default function UserDropdownManager() {
   function closeDropdown() {
     setIsOpen(false);
   }
+
+  const handleSignOut = async () => {
+    setIsLoggingOut(true);
+    try {
+      await authenticationApi.logout();
+      router.push("/auth/signin");
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still redirect to signin even if logout fails
+      router.push("/auth/signin");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
   return (
     <div className="relative">
       <button
@@ -94,9 +112,10 @@ export default function UserDropdownManager() {
             </DropdownItem>
           </li>
         </ul>
-        <Link
-          href="/auth/signin"
-          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+        <button
+          onClick={handleSignOut}
+          disabled={isLoggingOut}
+          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed w-full text-left"
         >
           <svg
             className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"
@@ -113,8 +132,8 @@ export default function UserDropdownManager() {
               fill=""
             />
           </svg>
-          Sign out
-        </Link>
+          {isLoggingOut ? "Signing out..." : "Sign out"}
+        </button>
       </Dropdown>
     </div>
   );
