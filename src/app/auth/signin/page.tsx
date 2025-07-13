@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { EyeCloseIcon, EyeIcon } from "@/icons";
+import { authenticationApi } from "@/library/authenticationApi";
 
 export default function SignInPage() {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ export default function SignInPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,12 +28,31 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await authenticationApi.login({
+        email: formData.email,
+        password: formData.password,
+      });
+      
+      // Redirect based on user role
+      switch (response.role) {
+        case "MANAGER":
+          router.push("/manager");
+          break;
+        case "ADMIN":
+          router.push("/admin");
+          break;
+        default:
+          // Default fallback
+          router.push("/admin");
+      }
+    } catch (error) {
+      setError("Invalid email or password. Please try again.");
+    } finally {
       setIsLoading(false);
-      router.push("/admin");
-    }, 1000);
+    }
   };
 
   return (
@@ -88,7 +109,11 @@ export default function SignInPage() {
           </div>
         </div>
 
-        
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          </div>
+        )}
 
         <div>
           <button

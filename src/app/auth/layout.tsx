@@ -2,7 +2,8 @@
 
 import { ThemeProvider } from "@/context/ThemeContext";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect } from "react";
+import { authenticationApi } from "@/library/authenticationApi";
 
 export default function AuthLayout({
   children,
@@ -10,6 +11,26 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+
+  useEffect(() => {
+    // Check if user is already authenticated
+    if (authenticationApi.isAuthenticated()) {
+      const userRole = authenticationApi.getUserRole();
+      
+      // Redirect based on user role
+      switch (userRole) {
+        case "MANAGER":
+          router.push("/manager");
+          break;
+        case "ADMIN":
+          router.push("/admin");
+          break;
+        default:
+          // Default fallback
+          router.push("/admin");
+      }
+    }
+  }, [router]);
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <ThemeProvider>
