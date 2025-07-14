@@ -26,6 +26,16 @@ interface PasswordResetResponse {
   success: boolean;
 }
 
+interface PasswordUpdateRequest {
+  old_password: string;
+  new_password: string;
+}
+
+interface PasswordUpdateResponse {
+  message: string;
+  success: boolean;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const authenticationApi = {
@@ -139,6 +149,34 @@ export const authenticationApi = {
 
     if (!response.ok) {
       throw new Error('Failed to reset password');
+    }
+
+    return response.json();
+  },
+
+  async updatePassword(oldPassword: string, newPassword: string): Promise<PasswordUpdateResponse> {
+    const accessToken = localStorage.getItem('access_token');
+    
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/password-update`, {
+      method: 'PUT',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        old_password: oldPassword,
+        new_password: newPassword,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to update password');
     }
 
     return response.json();

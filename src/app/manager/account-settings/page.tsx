@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { authenticationApi } from "@/library/authenticationApi";
+import UpdatePasswordCard from "./UpdatePasswordCard";
 
 export default function ManagerAccountSettings() {
   const [userDetails, setUserDetails] = useState<{
@@ -83,26 +84,7 @@ export default function ManagerAccountSettings() {
           </div>
 
           {/* Update Password Card */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex-1 min-w-0">
-            <div className="mb-6">
-              <span className="text-lg font-semibold text-gray-900">Update Password</span>
-            </div>
-            <form className="space-y-5 max-w-md">
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">Current Password</label>
-                <input type="password" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-200" placeholder="Enter current password" />
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">New Password</label>
-                <input type="password" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-200" placeholder="Enter new password" />
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">Confirm New Password</label>
-                <input type="password" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-200" placeholder="Confirm new password" />
-              </div>
-              <button type="submit" className="px-6 py-2 rounded bg-brand-500 text-white font-medium">Update Password</button>
-            </form>
-          </div>
+          <UpdatePasswordCard />
         </div>
       </div>
     </div>
