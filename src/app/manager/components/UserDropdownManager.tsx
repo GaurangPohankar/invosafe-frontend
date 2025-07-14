@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dropdown } from "../../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../../components/ui/dropdown/DropdownItem";
@@ -10,7 +10,19 @@ import { authenticationApi } from "@/library/authenticationApi";
 export default function UserDropdownManager() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [userDetails, setUserDetails] = useState<{
+    name: string | null;
+    email: string | null;
+  }>({ name: null, email: null });
   const router = useRouter();
+
+  useEffect(() => {
+    const details = authenticationApi.getUserDetails();
+    setUserDetails({
+      name: details.name,
+      email: details.email,
+    });
+  }, []);
 
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.stopPropagation();
@@ -49,7 +61,9 @@ export default function UserDropdownManager() {
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Musharof</span>
+        <span className="block mr-1 font-medium text-theme-sm">
+          {userDetails.name || 'User'}
+        </span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -78,10 +92,10 @@ export default function UserDropdownManager() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            Musharof Chowdhury
+            {userDetails.name || 'User'}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            randomuser@pimjo.com
+            {userDetails.email || 'No email'}
           </span>
         </div>
 

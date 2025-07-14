@@ -106,14 +106,6 @@ export const authenticationApi = {
     };
   },
 
-  isAuthenticated(): boolean {
-    return !!localStorage.getItem('access_token');
-  },
-
-  getUserRole(): string | null {
-    return localStorage.getItem('role');
-  },
-
   async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
     const response = await fetch(`${API_BASE_URL}/password-reset/request`, {
       method: 'POST',
@@ -151,4 +143,29 @@ export const authenticationApi = {
 
     return response.json();
   },
+
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('access_token');
+  },
+
+  getUserDetails(): {
+    access_token: string | null;
+    token_type: string | null;
+    user_id: number | null;
+    name: string | null;
+    email: string | null;
+    role: string | null;
+    lender_name: string | null;
+  } {
+    return {
+      access_token: localStorage.getItem('access_token'),
+      token_type: localStorage.getItem('token_type'),
+      user_id: localStorage.getItem('user_id') ? parseInt(localStorage.getItem('user_id')!) : null,
+      name: localStorage.getItem('name'),
+      email: localStorage.getItem('email'),
+      role: localStorage.getItem('role'),
+      lender_name: localStorage.getItem('lender_name'),
+    };
+  },
+  
 }; 
