@@ -24,6 +24,17 @@ export default function UserDropdownManager() {
     });
   }, []);
 
+  const getInitials = (name: string | null): string => {
+    if (!name) return 'U';
+    
+    const words = name.trim().split(' ');
+    if (words.length === 1) {
+      return words[0].charAt(0).toUpperCase();
+    }
+    
+    return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+  };
+
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.stopPropagation();
     setIsOpen((prev) => !prev);
@@ -52,13 +63,8 @@ export default function UserDropdownManager() {
         onClick={toggleDropdown}
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <Image
-            width={44}
-            height={44}
-            src="/images/user/owner.jpg"
-            alt="Manager"
-          />
+        <span className="mr-3 flex items-center justify-center overflow-hidden rounded-full h-11 w-11 bg-blue-500 text-white font-semibold text-lg">
+          {getInitials(userDetails.name)}
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
