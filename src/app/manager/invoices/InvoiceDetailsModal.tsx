@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { EyeCloseIcon, DollarLineIcon } from "@/icons/index";
 import Badge from "@/components/ui/badge/Badge";
+import { userApi } from "@/library/userApi";
 const STATUS_MAP = {
   0: { label: "Searched", color: "warning" },
   1: { label: "Financed", color: "success" },
@@ -48,24 +49,29 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
   const [buyerBusiness, setBuyerBusiness] = useState<BusinessDetails | null>(null);
   const [sellerBusiness, setSellerBusiness] = useState<BusinessDetails | null>(null);
   const [loading, setLoading] = useState(false);
+  const [createdBy, setCreatedBy] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && invoice) {
       setLoading(true);
       setBuyerBusiness(null);
       setSellerBusiness(null);
+      setCreatedBy(null);
       const token = localStorage.getItem('access_token') || '';
       Promise.all([
         fetchBusinessDetails(invoice.buyer_pan, token),
         fetchBusinessDetails(invoice.seller_pan, token),
-      ]).then(([buyer, seller]) => {
+        userApi.getUserById(invoice.user_id).catch(() => null),
+      ]).then(([buyer, seller, user]) => {
         setBuyerBusiness(buyer);
         setSellerBusiness(seller);
+        setCreatedBy(user?.name || null);
         setLoading(false);
       });
     } else {
       setBuyerBusiness(null);
       setSellerBusiness(null);
+      setCreatedBy(null);
     }
   }, [open, invoice]);
 
@@ -131,7 +137,7 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
             </div>
             <div>
               <div className="mb-2 text-xs text-gray-500">Created By</div>
-              <div className="font-semibold text-gray-900">{invoice.user_id}</div>
+              <div className="font-semibold text-gray-900">{createdBy || invoice.user_id}</div>
             </div>
             <div>
               <div className="mb-2 text-xs text-gray-500">Tax Amount</div>
