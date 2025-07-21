@@ -24,26 +24,26 @@ export default function MarkAsFinancedModal({ open, onClose, onSubmit, invoice }
 
   function validate() {
     const errs: { [key: string]: string } = {};
-    if (!form.loanAmount || isNaN(Number(form.loanAmount)) || Number(form.loanAmount) <= 0) {
-      errs.loanAmount = "Enter a valid loan amount";
+    if (form.loanAmount && (isNaN(Number(form.loanAmount)) || Number(form.loanAmount) < 0)) {
+      errs.loanAmount = "Enter a valid loan amount (>= 0)";
     }
-    if (!form.rateOfInterest || isNaN(Number(form.rateOfInterest)) || Number(form.rateOfInterest) < 0 || Number(form.rateOfInterest) > 100) {
-      errs.rateOfInterest = "Enter a valid interest rate (0-100)";
+    if (form.rateOfInterest && (isNaN(Number(form.rateOfInterest)) || Number(form.rateOfInterest) < 0)) {
+      errs.rateOfInterest = "Enter a valid interest rate (>= 0)";
     }
-    if (!form.disbursementAmount || isNaN(Number(form.disbursementAmount)) || Number(form.disbursementAmount) <= 0) {
-      errs.disbursementAmount = "Enter a valid disbursement amount";
+    if (form.disbursementAmount && (isNaN(Number(form.disbursementAmount)) || Number(form.disbursementAmount) < 0)) {
+      errs.disbursementAmount = "Enter a valid disbursement amount (>= 0)";
     }
-    if (!form.disbursementDate) {
-      errs.disbursementDate = "Select a disbursement date";
+    if (form.creditPeriod && (isNaN(Number(form.creditPeriod)) || Number(form.creditPeriod) < 0 || !Number.isInteger(Number(form.creditPeriod)))) {
+      errs.creditPeriod = "Enter a valid credit period (integer >= 0)";
     }
-    if (!form.dueDate) {
-      errs.dueDate = "Select a due date";
+    if (form.disbursementDate && isNaN(Date.parse(form.disbursementDate))) {
+      errs.disbursementDate = "Enter a valid disbursement date";
+    }
+    if (form.dueDate && isNaN(Date.parse(form.dueDate))) {
+      errs.dueDate = "Enter a valid due date";
     }
     if (form.disbursementDate && form.dueDate && form.dueDate < form.disbursementDate) {
       errs.dueDate = "Due date cannot be before disbursement date";
-    }
-    if (!form.creditPeriod || isNaN(Number(form.creditPeriod)) || Number(form.creditPeriod) < 1 || !Number.isInteger(Number(form.creditPeriod))) {
-      errs.creditPeriod = "Enter a valid credit period (months)";
     }
     return errs;
   }

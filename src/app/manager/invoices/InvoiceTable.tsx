@@ -27,6 +27,7 @@ interface Invoice {
   status: number;
   created_at: string;
   updated_at: string;
+  invoice_amount?: number;
 }
 
 const STATUS_MAP = {
@@ -209,7 +210,6 @@ export default function InvoiceTable() {
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice Date</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice Amount</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Date & Time</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Action</th>
                 </tr>
               </thead>
@@ -226,7 +226,7 @@ export default function InvoiceTable() {
                       month: 'short', 
                       year: 'numeric' 
                     })}</td>
-                    <td className="px-6 py-4">₹{row.tax_amount?.toLocaleString('en-IN') || '0'}</td>
+                    <td className="px-6 py-4">₹{row.invoice_amount !== undefined ? Number(row.invoice_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}</td>
                     <td className="px-6 py-4">
                       <Badge 
                         variant="light" 
@@ -236,13 +236,7 @@ export default function InvoiceTable() {
                         {STATUS_MAP[row.status as keyof typeof STATUS_MAP]?.label || row.status}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4">{new Date(row.created_at).toLocaleString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}</td>
+                    
                     <td className="px-6 py-4 text-center relative">
                       <button
                         className="p-2 rounded-full hover:bg-gray-100 dropdown-toggle"
