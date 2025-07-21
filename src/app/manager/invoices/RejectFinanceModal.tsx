@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import Badge from "@/components/ui/badge/Badge";
+import { invoiceApi } from "@/library/invoiceApi";
 
 interface RejectFinanceModalProps {
   open: boolean;
@@ -12,13 +13,28 @@ interface RejectFinanceModalProps {
 
 export default function RejectFinanceModal({ open, onClose, invoice, onSubmit }: RejectFinanceModalProps) {
   const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
   const isValid = !!reason.trim();
 
   if (!invoice) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isValid && onSubmit) onSubmit(reason);
+    if (!isValid) return;
+    setLoading(true);
+    try {
+      await invoiceApi.updateInvoice(invoice.id, {
+        ...invoice,
+        status: 2,
+        rejection_reason: reason,
+      });
+      if (onSubmit) onSubmit(reason);
+      onClose();
+    } catch (err) {
+      alert("Failed to reject invoice");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,10 +59,10 @@ export default function RejectFinanceModal({ open, onClose, invoice, onSubmit }:
         <div className="px-8 pb-8 flex justify-center">
           <button
             type="submit"
-            disabled={!isValid}
+            disabled={!isValid || loading}
             className="w-full py-3 rounded-lg bg-gray-200 text-gray-500 font-semibold text-base disabled:opacity-60 disabled:cursor-not-allowed bg-brand-500 text-white hover:bg-brand-600 transition disabled:bg-gray-200 disabled:text-gray-500"
           >
-            Confirm
+            {loading ? "Rejecting..." : "Confirm"}
           </button>
         </div>
       </form>
