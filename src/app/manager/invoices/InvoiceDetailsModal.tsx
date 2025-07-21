@@ -130,12 +130,12 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
               </div>
             </div>
             <div>
-              <div className="mb-2 text-xs text-gray-500">User ID</div>
+              <div className="mb-2 text-xs text-gray-500">Created By</div>
               <div className="font-semibold text-gray-900">{invoice.user_id}</div>
             </div>
             <div>
               <div className="mb-2 text-xs text-gray-500">Tax Amount</div>
-              <div className="font-semibold text-gray-900">{invoice.tax_amount}</div>
+              <div className="font-semibold text-gray-900">₹{invoice.tax_amount}</div>
             </div>
             <div>
               <div className="mb-2 text-xs text-gray-500">Purchase Order No.</div>
@@ -162,37 +162,49 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
                 {invoice.loan_amount && (
                   <div>
                     <div className="text-xs text-gray-500">Loan Amount</div>
-                    <div className="font-semibold text-gray-900">{invoice.loan_amount}</div>
+                    <div className="font-semibold text-gray-900">₹{invoice.loan_amount}</div>
                   </div>
                 )}
                 {invoice.interest_rate && (
                   <div>
                     <div className="text-xs text-gray-500">Interest Rate</div>
-                    <div className="font-semibold text-gray-900">{invoice.interest_rate}</div>
+                    <div className="font-semibold text-gray-900">{invoice.interest_rate} %</div>
                   </div>
                 )}
                 {invoice.disbursement_amount && (
                   <div>
                     <div className="text-xs text-gray-500">Disbursement Amount</div>
-                    <div className="font-semibold text-gray-900">{invoice.disbursement_amount}</div>
+                    <div className="font-semibold text-gray-900">₹{invoice.disbursement_amount}</div>
                   </div>
                 )}
                 {invoice.disbursement_date && (
                   <div>
                     <div className="text-xs text-gray-500">Disbursement Date</div>
-                    <div className="font-semibold text-gray-900">{invoice.disbursement_date}</div>
+                    <div className="font-semibold text-gray-900">
+                    {new Date(invoice.disbursement_date).toLocaleDateString('en-IN', { 
+                      day: 'numeric', 
+                      month: 'short', 
+                      year: 'numeric' 
+                    })}
+                    </div>
                   </div>
                 )}
                 {invoice.credit_period && (
                   <div>
-                    <div className="text-xs text-gray-500">Credit Period</div>
+                    <div className="text-xs text-gray-500">Credit Period(Months)</div>
                     <div className="font-semibold text-gray-900">{invoice.credit_period}</div>
                   </div>
                 )}
                 {invoice.due_date && (
                   <div>
                     <div className="text-xs text-gray-500">Due Date</div>
-                    <div className="font-semibold text-gray-900">{invoice.due_date}</div>
+                    <div className="font-semibold text-gray-900">
+                    {new Date(invoice.due_date).toLocaleDateString('en-IN', { 
+                      day: 'numeric', 
+                      month: 'short', 
+                      year: 'numeric' 
+                    })}
+                    </div>
                   </div>
                 )}
               </div>
