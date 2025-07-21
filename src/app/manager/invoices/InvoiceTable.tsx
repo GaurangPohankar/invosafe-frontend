@@ -46,7 +46,13 @@ export default function InvoiceTable() {
       try {
         setLoading(true);
         const userDetails = authenticationApi.getUserDetails();
-        const lenderId = 1; 
+        const lenderId = userDetails.lender_id;
+        if (!lenderId) {
+          setError('No lender ID found for the current user.');
+          setInvoices([]);
+          setLoading(false);
+          return;
+        }
         const fetchedInvoices = await invoiceApi.getInvoicesByLenderId(lenderId);
         setInvoices(fetchedInvoices);
         setError(null);
