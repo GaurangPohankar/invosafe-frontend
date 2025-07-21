@@ -2,8 +2,11 @@ interface LoginResponse {
   access_token: string;
   token_type: string;
   user_id: number;
+  name: string;
   email: string;
   role: string;
+  lender_id: number;
+  lender_name: string;
 }
 
 interface LoginCredentials {
@@ -22,6 +25,16 @@ interface PasswordResetVerify {
 }
 
 interface PasswordResetResponse {
+  message: string;
+  success: boolean;
+}
+
+interface PasswordUpdateRequest {
+  old_password: string;
+  new_password: string;
+}
+
+interface PasswordUpdateResponse {
   message: string;
   success: boolean;
 }
@@ -57,8 +70,11 @@ export const authenticationApi = {
     localStorage.setItem('access_token', data.access_token);
     localStorage.setItem('token_type', data.token_type);
     localStorage.setItem('user_id', data.user_id.toString());
+    localStorage.setItem('name', data.name);
     localStorage.setItem('email', data.email);
     localStorage.setItem('role', data.role);
+    localStorage.setItem('lender_id', data.lender_id.toString());
+    localStorage.setItem('lender_name', data.lender_name);
     
     return data;
   },
@@ -86,32 +102,33 @@ export const authenticationApi = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('token_type');
     localStorage.removeItem('user_id');
+    localStorage.removeItem('name');
     localStorage.removeItem('email');
     localStorage.removeItem('role');
+    localStorage.removeItem('lender_id');
+    localStorage.removeItem('lender_name');
   },
 
   getStoredAuthData(): {
     access_token: string | null;
     token_type: string | null;
     user_id: number | null;
+    name: string | null;
     email: string | null;
     role: string | null;
+    lender_id: number | null;
+    lender_name: string | null;
   } {
     return {
       access_token: localStorage.getItem('access_token'),
       token_type: localStorage.getItem('token_type'),
       user_id: localStorage.getItem('user_id') ? parseInt(localStorage.getItem('user_id')!) : null,
+      name: localStorage.getItem('name'),
       email: localStorage.getItem('email'),
       role: localStorage.getItem('role'),
+      lender_id: localStorage.getItem('lender_id') ? parseInt(localStorage.getItem('lender_id')!) : null,
+      lender_name: localStorage.getItem('lender_name'),
     };
-  },
-
-  isAuthenticated(): boolean {
-    return !!localStorage.getItem('access_token');
-  },
-
-  getUserRole(): string | null {
-    return localStorage.getItem('role');
   },
 
   async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
@@ -151,4 +168,59 @@ export const authenticationApi = {
 
     return response.json();
   },
+
+  async updatePassword(oldPassword: string, newPassword: string): Promise<PasswordUpdateResponse> {
+    const accessToken = localStorage.getItem('access_token');
+    
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/password-update`, {
+      method: 'PUT',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        old_password: oldPassword,
+        new_password: newPassword,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to update password');
+    }
+
+    return response.json();
+  },
+
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('access_token');
+  },
+
+  getUserDetails(): {
+    access_token: string | null;
+    token_type: string | null;
+    user_id: number | null;
+    name: string | null;
+    email: string | null;
+    role: string | null;
+    lender_id: number | null;
+    lender_name: string | null;
+  } {
+    return {
+      access_token: localStorage.getItem('access_token'),
+      token_type: localStorage.getItem('token_type'),
+      user_id: localStorage.getItem('user_id') ? parseInt(localStorage.getItem('user_id')!) : null,
+      name: localStorage.getItem('name'),
+      email: localStorage.getItem('email'),
+      role: localStorage.getItem('role'),
+      lender_id: localStorage.getItem('lender_id') ? parseInt(localStorage.getItem('lender_id')!) : null,
+      lender_name: localStorage.getItem('lender_name'),
+    };
+  },
+  
 }; 

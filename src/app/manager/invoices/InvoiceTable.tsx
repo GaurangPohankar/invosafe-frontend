@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Badge from "@/components/ui/badge/Badge";
 import { MoreDotIcon, EyeIcon, DollarLineIcon, EyeCloseIcon, TrashBinIcon, EmptyInvoiceIcon } from "@/icons/index";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
@@ -8,6 +8,8 @@ import InvoiceDetailsModal from "./InvoiceDetailsModal";
 import MarkAsFinancedModal from "./MarkAsFinancedModal";
 import RejectFinanceModal from "./RejectFinanceModal";
 import DeleteInvoiceModal from "./DeleteInvoiceModal";
+import { invoiceApi } from "@/library/invoiceApi";
+import { authenticationApi } from "@/library/authenticationApi";
 import Image from "next/image";
 
 const TABS = [
@@ -18,29 +20,7 @@ const TABS = [
 ];
 
 
-const TABLE_DATA = [
-  {
-    id: "ICV8993",
-    buyer: "Tushar",
-    seller: "Yash",
-    invoiceNo: "24",
-    invoiceDate: "24th Mar, 2025",
-    invoiceAmount: "₹32,07,450.00",
-    status: "Checked",
-    dateTime: "24th Mar, 2025 10:30 AM",
-  },
-  // ... more rows (mocked for now)
-  ...Array(8).fill({
-    id: "ICV8993",
-    buyer: "-",
-    seller: "-",
-    invoiceNo: "-",
-    invoiceDate: "-",
-    invoiceAmount: "-",
-    status: "Checked",
-    dateTime: "24th Mar, 2025 10:30 AM",
-  }),
-];
+// Remove the mock data as we'll fetch from API
 
 const STATUS_COLORS = {
   Checked: { variant: "light", color: "warning" },
@@ -56,10 +36,41 @@ export default function InvoiceTable() {
   const [financeModalOpen, setFinanceModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter logic can be added here based on activeTab and search
-  const filteredData = TABLE_DATA.filter(row => {
-    if (search && !row.id.toLowerCase().includes(search.toLowerCase())) return false;
+  // Fetch invoices on component mount
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        setLoading(true);
+        const userDetails = authenticationApi.getUserDetails();
+        const lenderId = userDetails.lender_id;
+        if (!lenderId) {
+          setError('No lender ID found for the current user.');
+          setInvoices([]);
+          setLoading(false);
+          return;
+        }
+        const fetchedInvoices = await invoiceApi.getInvoicesByLenderId(lenderId);
+        setInvoices(fetchedInvoices);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch invoices:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch invoices');
+        setInvoices([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInvoices();
+  }, []);
+
+  // Filter logic based on activeTab and search
+  const filteredData = invoices.filter(row => {
+    if (search && !row.invoice_id?.toLowerCase().includes(search.toLowerCase())) return false;
     // Add more search logic as needed
     return true;
   });
@@ -123,8 +134,24 @@ export default function InvoiceTable() {
             </button>
           ))}
         </div>
-        {/* Table or Empty State */}
-        {isEmpty ? (
+        {/* Loading, Error, Empty State, or Table */}
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center py-16">
+            <div className="text-gray-500">Loading invoices...</div>
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex flex-col items-center justify-center py-16">
+            <div className="text-red-500 text-center text-base font-medium max-w-md mb-4">
+              {error}
+            </div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600"
+            >
+              Retry
+            </button>
+          </div>
+        ) : isEmpty ? (
           <div className="flex-1 flex flex-col items-center justify-center py-16">
             <div className=" border-brand-300 rounded-lg p-8 bg-white mb-6 flex flex-col items-center">
               {/* Use the provided SVG illustration */}
@@ -155,16 +182,32 @@ export default function InvoiceTable() {
                 {filteredData.map((row, idx) => (
                   <tr key={idx} className="border-b last:border-0">
                     <td className="px-4 py-4"><input type="checkbox" /></td>
-                    <td className="px-6 py-4 font-medium text-gray-900">{row.id}</td>
-                    <td className="px-6 py-4">{row.buyer}</td>
-                    <td className="px-6 py-4">{row.seller}</td>
-                    <td className="px-6 py-4">{row.invoiceNo}</td>
-                    <td className="px-6 py-4">{row.invoiceDate}</td>
-                    <td className="px-6 py-4">{row.invoiceAmount}</td>
+                    <td className="px-6 py-4 font-medium text-gray-900">{row.invoice_id}</td>
+                    <td className="px-6 py-4">{row.buyer_pan || '-'}</td>
+                    <td className="px-6 py-4">{row.seller_pan || '-'}</td>
+                    <td className="px-6 py-4">{row.purchase_order_number || '-'}</td>
+                    <td className="px-6 py-4">{new Date(row.created_at).toLocaleDateString('en-IN', { 
+                      day: 'numeric', 
+                      month: 'short', 
+                      year: 'numeric' 
+                    })}</td>
+                    <td className="px-6 py-4">₹{row.tax_amount?.toLocaleString('en-IN') || '0'}</td>
                     <td className="px-6 py-4">
-                      <Badge variant="light" color="warning" size="sm">Checked</Badge>
+                      <Badge 
+                        variant="light" 
+                        color={row.status === 'active' ? 'success' : 'warning'} 
+                        size="sm"
+                      >
+                        {row.status}
+                      </Badge>
                     </td>
-                    <td className="px-6 py-4">{row.dateTime}</td>
+                    <td className="px-6 py-4">{new Date(row.created_at).toLocaleString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</td>
                     <td className="px-6 py-4 text-center relative">
                       <button
                         className="p-2 rounded-full hover:bg-gray-100 dropdown-toggle"
