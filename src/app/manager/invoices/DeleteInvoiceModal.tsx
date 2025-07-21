@@ -34,7 +34,7 @@ export default function DeleteInvoiceModal({ open, onClose, invoice, onDelete }:
     <Modal isOpen={open} onClose={onClose} showCloseButton={true} className="max-w-md w-full rounded-2xl">
       <div className="bg-white rounded-2xl p-8">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Delete Invoice</h2>
-        <p className="text-gray-700 mb-6">Are you sure you want to delete invoice <span className="font-semibold">{invoice.id}</span>?</p>
+        <p className="text-gray-700 mb-6">Are you sure you want to move invoice <span className="font-semibold">{invoice.id}</span> to trash</p>
         <div className="flex justify-end gap-3">
           <button
             type="button"
@@ -49,7 +49,7 @@ export default function DeleteInvoiceModal({ open, onClose, invoice, onDelete }:
             className="px-5 py-2 rounded-lg bg-error-500 text-white font-medium hover:bg-error-600"
             disabled={loading}
           >
-            {loading ? "Deleting..." : "Delete"}
+            {loading ? "Moving..." : "Move To Trash"}
           </button>
         </div>
       </div>

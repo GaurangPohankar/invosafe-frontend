@@ -60,35 +60,34 @@ export default function InvoiceTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch invoices on mount and when activeTab changes
-  useEffect(() => {
-    const fetchInvoices = async () => {
-      try {
-        setLoading(true);
-        const userDetails = authenticationApi.getUserDetails();
-        const lenderId = userDetails.lender_id;
-        if (!lenderId) {
-          setError('No lender ID found for the current user.');
-          setInvoices([]);
-          setLoading(false);
-          return;
-        }
-        // Find the status for the active tab
-        const tab = TABS.find(t => t.label === activeTab);
-        let statusParam = tab && tab.status !== null ? tab.status.toString() : undefined;
-        const urlParams = statusParam ? `?status=${statusParam}` : '';
-        const fetchedInvoices = await fetchInvoicesByLenderAndStatus(lenderId, statusParam);
-        setInvoices(fetchedInvoices);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch invoices:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch invoices');
+  // Fetch invoices function (moved outside useEffect)
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+      const userDetails = authenticationApi.getUserDetails();
+      const lenderId = userDetails.lender_id;
+      if (!lenderId) {
+        setError('No lender ID found for the current user.');
         setInvoices([]);
-      } finally {
         setLoading(false);
+        return;
       }
-    };
+      const tab = TABS.find(t => t.label === activeTab);
+      let statusParam = tab && tab.status !== null ? tab.status.toString() : undefined;
+      const fetchedInvoices = await fetchInvoicesByLenderAndStatus(lenderId, statusParam);
+      setInvoices(fetchedInvoices);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch invoices');
+      setInvoices([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchInvoices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Helper to fetch invoices by lender and status
@@ -280,7 +279,7 @@ export default function InvoiceTable() {
                         {/* Delete Invoice: hide if status is 4 */}
                         {Number(row.status) !== 4 && (
                           <DropdownItem onItemClick={() => handleDeleteInvoice(row)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
-                            <TrashBinIcon className="w-5 h-5" /> Delete Invoice
+                            <TrashBinIcon className="w-5 h-5" /> Trash 
                           </DropdownItem>
                         )}
                       </Dropdown>
@@ -302,23 +301,37 @@ export default function InvoiceTable() {
         open={financeModalOpen} 
         onClose={() => setFinanceModalOpen(false)} 
         invoice={selectedInvoice}
+        onSubmit={() => {
+          setFinanceModalOpen(false);
+          fetchInvoices();
+        }}
       />
       <RejectFinanceModal 
         open={rejectModalOpen} 
         onClose={() => setRejectModalOpen(false)} 
         invoice={selectedInvoice}
-        onSubmit={() => setRejectModalOpen(false)}
+        onSubmit={() => {
+          setRejectModalOpen(false);
+          fetchInvoices();
+        }}
       />
       <DeleteInvoiceModal 
         open={deleteModalOpen} 
         onClose={() => setDeleteModalOpen(false)} 
         invoice={selectedInvoice}
-        onDelete={() => setDeleteModalOpen(false)}
+        onDelete={() => {
+          setDeleteModalOpen(false);
+          fetchInvoices();
+        }}
       />
       <MarkAsRepaidModal
         open={repaidModalOpen}
         onClose={() => setRepaidModalOpen(false)}
         invoice={selectedInvoice}
+        onSubmit={() => {
+          setRepaidModalOpen(false);
+          fetchInvoices();
+        }}
       />
     </>
   );
