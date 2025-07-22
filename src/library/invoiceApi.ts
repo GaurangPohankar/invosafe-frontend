@@ -9,9 +9,15 @@ interface Invoice {
   eway_bill: string;
   seller_pan: string;
   buyer_pan: string;
-  status: string;
+  status: number;
   created_at: string;
   updated_at: string;
+  loan_amount?: string;
+  interest_rate?: string;
+  disbursement_amount?: string;
+  disbursement_date?: string;
+  credit_period?: string;
+  due_date?: string;
 }
 
 interface InvoiceResponse {

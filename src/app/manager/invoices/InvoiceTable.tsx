@@ -8,27 +8,47 @@ import InvoiceDetailsModal from "./InvoiceDetailsModal";
 import MarkAsFinancedModal from "./MarkAsFinancedModal";
 import RejectFinanceModal from "./RejectFinanceModal";
 import DeleteInvoiceModal from "./DeleteInvoiceModal";
+import MarkAsRepaidModal from "./MarkAsRepaidModal";
 import { invoiceApi } from "@/library/invoiceApi";
 import { authenticationApi } from "@/library/authenticationApi";
 import Image from "next/image";
 
+interface Invoice {
+  id: number;
+  user_id: number;
+  invoice_id: string;
+  lender_id: number;
+  tax_amount: number;
+  purchase_order_number: string;
+  lorry_receipt: string;
+  eway_bill: string;
+  seller_pan: string;
+  buyer_pan: string;
+  status: number;
+  created_at: string;
+  updated_at: string;
+  invoice_amount?: number;
+}
+
+const STATUS_MAP = {
+  0: { label: "Searched", color: "warning" },
+  1: { label: "Financed", color: "success" },
+  2: { label: "Rejected", color: "error" },
+  3: { label: "Repaid", color: "info" },
+  4: { label: "Trash", color: "dark" },
+} as const;
+
 const TABS = [
-  { label: "All", count: 150, color: "light" },
-  { label: "Searched", count: 200, color: "warning" },
-  { label: "Financed", count: 150, color: "success" },
-  { label: "Repaid", count: 50, color: "error" },
+  { label: "All", status: null },
+  { label: "Searched", status: 0 },
+  { label: "Financed", status: 1 },
+  { label: "Rejected", status: 2 },
+  { label: "Repaid", status: 3 },
+  { label: "Trash", status: 4 },
 ];
 
-
-// Remove the mock data as we'll fetch from API
-
-const STATUS_COLORS = {
-  Checked: { variant: "light", color: "warning" },
-  // Add more status mappings if needed
-};
-
 export default function InvoiceTable() {
-  const [activeTab, setActiveTab] = useState("Searched");
+  const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -36,44 +56,67 @@ export default function InvoiceTable() {
   const [financeModalOpen, setFinanceModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [repaidModalOpen, setRepaidModalOpen] = useState(false);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch invoices on component mount
-  useEffect(() => {
-    const fetchInvoices = async () => {
-      try {
-        setLoading(true);
-        const userDetails = authenticationApi.getUserDetails();
-        const lenderId = userDetails.lender_id;
-        if (!lenderId) {
-          setError('No lender ID found for the current user.');
-          setInvoices([]);
-          setLoading(false);
-          return;
-        }
-        const fetchedInvoices = await invoiceApi.getInvoicesByLenderId(lenderId);
-        setInvoices(fetchedInvoices);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch invoices:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch invoices');
+  // Fetch invoices function (moved outside useEffect)
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+      const userDetails = authenticationApi.getUserDetails();
+      const lenderId = userDetails.lender_id;
+      if (!lenderId) {
+        setError('No lender ID found for the current user.');
         setInvoices([]);
-      } finally {
         setLoading(false);
+        return;
       }
-    };
+      const tab = TABS.find(t => t.label === activeTab);
+      let statusParam = tab && tab.status !== null ? tab.status.toString() : undefined;
+      const fetchedInvoices = await fetchInvoicesByLenderAndStatus(lenderId, statusParam);
+      setInvoices(fetchedInvoices);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch invoices');
+      setInvoices([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchInvoices();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
-  // Filter logic based on activeTab and search
+  // Helper to fetch invoices by lender and status
+  async function fetchInvoicesByLenderAndStatus(lenderId: number, status?: string) {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) throw new Error('No access token found');
+    let url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/invoice/lender/${lenderId}`;
+    if (status !== undefined) url += `?status=${status}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to fetch invoices');
+    }
+    return await response.json();
+  }
+
+  // Filter logic based on search
   const filteredData = invoices.filter(row => {
     if (search && !row.invoice_id?.toLowerCase().includes(search.toLowerCase())) return false;
-    // Add more search logic as needed
     return true;
   });
+  const isEmpty = filteredData.length === 0;
 
   const handleView = (invoice: any) => {
     setSelectedInvoice(invoice);
@@ -99,7 +142,11 @@ export default function InvoiceTable() {
     setOpenDropdown(null);
   };
 
-  const isEmpty = filteredData.length === 0;
+  const handleMarkAsRepaid = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setRepaidModalOpen(true);
+    setOpenDropdown(null);
+  };
 
   return (
     <>
@@ -118,16 +165,6 @@ export default function InvoiceTable() {
               style={{ background: "none" }}
             >
               {tab.label}
-              <span
-                className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold
-                  ${tab.color === "warning" ? "bg-yellow-100 text-yellow-700" : ""}
-                  ${tab.color === "success" ? "bg-green-100 text-green-700" : ""}
-                  ${tab.color === "error" ? "bg-red-100 text-red-700" : ""}
-                  ${tab.color === "light" ? "bg-gray-100 text-gray-600" : ""}
-                `}
-              >
-                {tab.count}
-              </span>
               {activeTab === tab.label && (
                 <span className="absolute left-0 -bottom-2 w-full h-1 bg-gray-900 rounded-t" />
               )}
@@ -162,11 +199,10 @@ export default function InvoiceTable() {
             </div>
           </div>
         ) : (
-          
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-3 text-left font-medium text-gray-500"><input type="checkbox" /></th>
+                  {/* Remove checkbox column */}
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Unique ID</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Buyer</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Seller</th>
@@ -174,14 +210,13 @@ export default function InvoiceTable() {
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice Date</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice Amount</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Date & Time</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredData.map((row, idx) => (
                   <tr key={idx} className="border-b last:border-0">
-                    <td className="px-4 py-4"><input type="checkbox" /></td>
+                    {/* Remove checkbox cell */}
                     <td className="px-6 py-4 font-medium text-gray-900">{row.invoice_id}</td>
                     <td className="px-6 py-4">{row.buyer_pan || '-'}</td>
                     <td className="px-6 py-4">{row.seller_pan || '-'}</td>
@@ -191,54 +226,62 @@ export default function InvoiceTable() {
                       month: 'short', 
                       year: 'numeric' 
                     })}</td>
-                    <td className="px-6 py-4">₹{row.tax_amount?.toLocaleString('en-IN') || '0'}</td>
+                    <td className="px-6 py-4">₹{row.invoice_amount !== undefined ? Number(row.invoice_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}</td>
                     <td className="px-6 py-4">
                       <Badge 
                         variant="light" 
-                        color={row.status === 'active' ? 'success' : 'warning'} 
+                        color={STATUS_MAP[row.status as keyof typeof STATUS_MAP]?.color || 'warning'} 
                         size="sm"
                       >
-                        {row.status}
+                        {STATUS_MAP[row.status as keyof typeof STATUS_MAP]?.label || row.status}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4">{new Date(row.created_at).toLocaleString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}</td>
+                    
                     <td className="px-6 py-4 text-center relative">
                       <button
                         className="p-2 rounded-full hover:bg-gray-100 dropdown-toggle"
                         onClick={() => setOpenDropdown(openDropdown === idx ? null : idx)}
                       >
-                        <MoreDotIcon className="w-5 h-5 text-gray-500" />
+                        <MoreDotIcon className="w-5 h-5 text-gray-500" /> 
                       </button>
-                                          <Dropdown
-                      isOpen={openDropdown === idx}
-                      onClose={() => setOpenDropdown(null)}
-                      className="w-48 p-2 mt-2 -top-2"
-                    >
+                      <Dropdown
+                        isOpen={openDropdown === idx}
+                        onClose={() => setOpenDropdown(null)}
+                        className="w-48 p-2 mt-2 -top-2"
+                      >
                         <DropdownItem onItemClick={() => handleView(row)} className="flex items-center gap-2 text-gray-700 hover:text-brand-600">
                           <EyeIcon className="w-5 h-5" /> View
                         </DropdownItem>
-                        <DropdownItem onItemClick={() => handleMarkAsFinanced(row)} className="flex items-center gap-2 text-gray-700 hover:text-success-600">
-                          <DollarLineIcon className="w-5 h-5" /> Mark as Financed
-                        </DropdownItem>
-                        <DropdownItem onItemClick={() => handleRejectFinance(row)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
-                          <EyeCloseIcon className="w-5 h-5" /> Reject Finance
-                        </DropdownItem>
-                        <DropdownItem onItemClick={() => handleDeleteInvoice(row)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
-                          <TrashBinIcon className="w-5 h-5" /> Delete Invoice
-                        </DropdownItem>
+                        {/* Mark as Financed: hide if status is 1 */}
+                        {Number(row.status) !== 1 && (
+                          <DropdownItem onItemClick={() => handleMarkAsFinanced(row)} className="flex items-center gap-2 text-gray-700 hover:text-success-600">
+                            <DollarLineIcon className="w-5 h-5" /> Mark as Financed
+                          </DropdownItem>
+                        )}
+                        {/* Reject Finance: hide if status is 2 */}
+                        {Number(row.status) !== 2 && (
+                          <DropdownItem onItemClick={() => handleRejectFinance(row)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
+                            <EyeCloseIcon className="w-5 h-5" /> Reject Finance
+                          </DropdownItem>
+                        )}
+                        {/* Mark as Repaid: hide if status is 3 */}
+                        {Number(row.status) !== 3 && (
+                          <DropdownItem onItemClick={() => handleMarkAsRepaid(row)} className="flex items-center gap-2 text-gray-700 hover:text-info-600">
+                            <DollarLineIcon className="w-5 h-5" /> Mark as Repaid
+                          </DropdownItem>
+                        )}
+                        {/* Delete Invoice: hide if status is 4 */}
+                        {Number(row.status) !== 4 && (
+                          <DropdownItem onItemClick={() => handleDeleteInvoice(row)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
+                            <TrashBinIcon className="w-5 h-5" /> Trash 
+                          </DropdownItem>
+                        )}
                       </Dropdown>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-
         )}
       </div>
       <InvoiceDetailsModal 
@@ -251,18 +294,38 @@ export default function InvoiceTable() {
       <MarkAsFinancedModal 
         open={financeModalOpen} 
         onClose={() => setFinanceModalOpen(false)} 
+        invoice={selectedInvoice}
+        onSubmit={() => {
+          setFinanceModalOpen(false);
+          fetchInvoices();
+        }}
       />
       <RejectFinanceModal 
         open={rejectModalOpen} 
         onClose={() => setRejectModalOpen(false)} 
         invoice={selectedInvoice}
-        onSubmit={() => setRejectModalOpen(false)}
+        onSubmit={() => {
+          setRejectModalOpen(false);
+          fetchInvoices();
+        }}
       />
       <DeleteInvoiceModal 
         open={deleteModalOpen} 
         onClose={() => setDeleteModalOpen(false)} 
         invoice={selectedInvoice}
-        onDelete={() => setDeleteModalOpen(false)}
+        onDelete={() => {
+          setDeleteModalOpen(false);
+          fetchInvoices();
+        }}
+      />
+      <MarkAsRepaidModal
+        open={repaidModalOpen}
+        onClose={() => setRepaidModalOpen(false)}
+        invoice={selectedInvoice}
+        onSubmit={() => {
+          setRepaidModalOpen(false);
+          fetchInvoices();
+        }}
       />
     </>
   );
