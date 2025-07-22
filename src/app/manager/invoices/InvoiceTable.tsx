@@ -22,12 +22,16 @@ interface Invoice {
   purchase_order_number: string;
   lorry_receipt: string;
   eway_bill: string;
-  seller_pan: string;
-  buyer_pan: string;
+  seller_id: number;
+  seller_gst: string;
+  buyer_id: number;
+  buyer_gst: string;
   status: number;
   created_at: string;
   updated_at: string;
   invoice_amount?: number;
+  seller_business?: { name: string };
+  buyer_business?: { name: string };
 }
 
 const STATUS_MAP = {
@@ -204,8 +208,8 @@ export default function InvoiceTable() {
                 <tr className="bg-gray-50">
                   {/* Remove checkbox column */}
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Unique ID</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Buyer</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Seller</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-500">Buyer</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice No.</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice Date</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice Amount</th>
@@ -218,8 +222,18 @@ export default function InvoiceTable() {
                   <tr key={idx} className="border-b last:border-0">
                     {/* Remove checkbox cell */}
                     <td className="px-6 py-4 font-medium text-gray-900">{row.invoice_id}</td>
-                    <td className="px-6 py-4">{row.buyer_pan || '-'}</td>
-                    <td className="px-6 py-4">{row.seller_pan || '-'}</td>
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-gray-900">{row.seller_business?.name || row.seller_id}</div>
+                      <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block mt-1">
+                        GST: {row.seller_gst}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-gray-900">{row.buyer_business?.name || row.buyer_id}</div>
+                      <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block mt-1">
+                        GST: {row.buyer_gst}
+                      </div>
+                    </td>
                     <td className="px-6 py-4">{row.purchase_order_number || '-'}</td>
                     <td className="px-6 py-4">{new Date(row.created_at).toLocaleDateString('en-IN', { 
                       day: 'numeric', 

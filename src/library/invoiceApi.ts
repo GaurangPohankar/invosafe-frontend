@@ -7,8 +7,10 @@ interface Invoice {
   purchase_order_number: string;
   lorry_receipt: string;
   eway_bill: string;
-  seller_pan: string;
-  buyer_pan: string;
+  seller_id: number;
+  seller_gst: string;
+  buyer_id: number;
+  buyer_gst: string;
   status: number;
   created_at: string;
   updated_at: string;
@@ -18,6 +20,7 @@ interface Invoice {
   disbursement_date?: string;
   credit_period?: string;
   due_date?: string;
+  invoice_amount?: number;
 }
 
 interface InvoiceResponse {

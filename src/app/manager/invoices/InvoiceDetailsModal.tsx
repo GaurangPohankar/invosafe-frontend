@@ -20,58 +20,29 @@ interface InvoiceDetailsModalProps {
   onRejectFinance?: () => void;
 }
 
-interface BusinessDetails {
-  pan: string;
-  name: string;
-}
-
-async function fetchBusinessDetails(pan: string, token: string): Promise<BusinessDetails | null> {
-  if (!pan) return null;
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/business/?pan=${pan}`, {
-      method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    // If API returns an array, take the first item
-    if (Array.isArray(data) && data.length > 0) return data[0];
-    return data;
-  } catch {
-    return null;
-  }
-}
-
 export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFinanced, onRejectFinance }: InvoiceDetailsModalProps) {
-  const [buyerBusiness, setBuyerBusiness] = useState<BusinessDetails | null>(null);
-  const [sellerBusiness, setSellerBusiness] = useState<BusinessDetails | null>(null);
-  const [loading, setLoading] = useState(false);
   const [createdBy, setCreatedBy] = useState<string | null>(null);
+  const [buyerName, setBuyerName] = useState<string | null>(null);
+  const [sellerName, setSellerName] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && invoice) {
-      setLoading(true);
-      setBuyerBusiness(null);
-      setSellerBusiness(null);
       setCreatedBy(null);
-      const token = localStorage.getItem('access_token') || '';
+      setBuyerName(null);
+      setSellerName(null);
       Promise.all([
-        fetchBusinessDetails(invoice.buyer_pan, token),
-        fetchBusinessDetails(invoice.seller_pan, token),
+        userApi.getUserById(invoice.buyer_id).catch(() => null),
+        userApi.getUserById(invoice.seller_id).catch(() => null),
         userApi.getUserById(invoice.user_id).catch(() => null),
-      ]).then(([buyer, seller, user]) => {
-        setBuyerBusiness(buyer);
-        setSellerBusiness(seller);
-        setCreatedBy(user?.name || null);
-        setLoading(false);
+      ]).then(([buyerUser, sellerUser, createdByUser]) => {
+        setBuyerName(buyerUser?.name || null);
+        setSellerName(sellerUser?.name || null);
+        setCreatedBy(createdByUser?.name || null);
       });
     } else {
-      setBuyerBusiness(null);
-      setSellerBusiness(null);
       setCreatedBy(null);
+      setBuyerName(null);
+      setSellerName(null);
     }
   }, [open, invoice]);
 
@@ -122,17 +93,17 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
         <div className="flex-1 overflow-y-auto px-8 pb-8">
           <div className="grid grid-cols-2 gap-8">
             <div>
-              <div className="mb-2 text-xs text-gray-500">Buyer PAN Number</div>
-              <div className="font-semibold text-gray-900">{invoice.buyer_pan || '-'}</div>
+              <div className="mb-2 text-xs text-gray-500">Seller</div>
+              <div className="font-semibold text-gray-900">{invoice.seller_business?.name || sellerName || invoice.seller_id}</div>
               <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block mt-1">
-                {loading ? 'Loading...' : (buyerBusiness?.name || 'N/A')}
+                GST: {invoice.seller_gst}
               </div>
             </div>
             <div>
-              <div className="mb-2 text-xs text-gray-500">Seller PAN Number</div>
-              <div className="font-semibold text-gray-900">{invoice.seller_pan || '-'}</div>
+              <div className="mb-2 text-xs text-gray-500">Buyer</div>
+              <div className="font-semibold text-gray-900">{invoice.buyer_business?.name || buyerName || invoice.buyer_id}</div>
               <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block mt-1">
-                {loading ? 'Loading...' : (sellerBusiness?.name || 'N/A')}
+                GST: {invoice.buyer_gst}
               </div>
             </div>
             <div>
