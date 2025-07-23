@@ -39,7 +39,7 @@ const STATUS_MAP = {
   1: { label: "Financed", color: "success" },
   2: { label: "Rejected", color: "error" },
   3: { label: "Repaid", color: "info" },
-  4: { label: "Trash", color: "dark" },
+ // 4: { label: "Trash", color: "dark" },
 } as const;
 
 const TABS = [
@@ -48,7 +48,7 @@ const TABS = [
   { label: "Financed", status: 1 },
   { label: "Rejected", status: 2 },
   { label: "Repaid", status: 3 },
-  { label: "Trash", status: 4 },
+  //{ label: "Trash", status: 4 },
 ];
 
 export default function InvoiceTable() {
@@ -210,7 +210,7 @@ export default function InvoiceTable() {
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Unique ID</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Seller</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Buyer</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice No.</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-500">Purchase Order</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice Date</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Invoice Amount</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
@@ -285,11 +285,11 @@ export default function InvoiceTable() {
                           </DropdownItem>
                         )}
                         {/* Delete Invoice: hide if status is 4 */}
-                        {Number(row.status) !== 4 && (
+                        {/* {Number(row.status) !== 4 && (
                           <DropdownItem onItemClick={() => handleDeleteInvoice(row)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
                             <TrashBinIcon className="w-5 h-5" /> Trash 
                           </DropdownItem>
-                        )}
+                        )} */}
                       </Dropdown>
                     </td>
                   </tr>
