@@ -1,12 +1,19 @@
 "use client";
 import UserDropdownManager from "@/app/manager/components/UserDropdownManager";
 import { useSidebar } from "@/context/SidebarContext";
+import { invoiceApi } from "@/library/invoiceApi";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState ,useEffect,useRef} from "react";
+import InvoiceDetailsModal from "@/app/manager/invoices/InvoiceDetailsModal";
 
 const ManagerHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -22,6 +29,33 @@ const ManagerHeader: React.FC = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
   };
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    setSearchError(null);
+    setSearchResults(null);
+
+    try {
+      // Try to find invoice by invoice_id using getInvoiceById
+      const invoice = await invoiceApi.getInvoiceById(searchQuery.trim());
+      setSearchResults(invoice);
+      setShowInvoiceModal(true);
+    } catch (error: any) {
+      setSearchError("Unable to find invoice with this ID");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleCloseInvoiceModal = () => {
+    setShowInvoiceModal(false);
+    setSearchResults(null);
+    setSearchQuery("");
+    setSearchError(null);
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -112,7 +146,7 @@ const ManagerHeader: React.FC = () => {
           </button>
 
           <div className="hidden lg:block">
-            <form>
+            <form onSubmit={handleSearch}>
               <div className="relative">
                 <span className="absolute -translate-y-1/2 left-4 top-1/2 pointer-events-none">
                   <svg
@@ -134,16 +168,33 @@ const ManagerHeader: React.FC = () => {
                 <input
                   ref={inputRef}
                   type="text"
-                  placeholder="Search invoices, users..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by invoice ID..."
                   className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
                 />
 
-                <button className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400">
-                  <span> ⌘ </span>
-                  <span> K </span>
+                <button 
+                  type="submit"
+                  disabled={isSearching}
+                  className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400 hover:bg-gray-100 disabled:opacity-50"
+                >
+                  {isSearching ? (
+                    <span className="animate-spin">⟳</span>
+                  ) : (
+                    <>
+                      <span> ⌘ </span>
+                      <span> K </span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
+            {searchError && (
+              <div className="absolute top-full left-0 mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                {searchError}
+              </div>
+            )}
           </div>
         </div>
         <div
@@ -154,6 +205,21 @@ const ManagerHeader: React.FC = () => {
           <UserDropdownManager /> 
         </div>
       </div>
+      
+      {/* Invoice Details Modal */}
+      <InvoiceDetailsModal
+        open={showInvoiceModal}
+        onClose={handleCloseInvoiceModal}
+        invoice={searchResults}
+        onMarkAsFinanced={() => {
+          // Handle mark as financed - could refresh data or show success message
+          handleCloseInvoiceModal();
+        }}
+        onRejectFinance={() => {
+          // Handle reject finance - could refresh data or show success message
+          handleCloseInvoiceModal();
+        }}
+      />
     </header>
   );
 };

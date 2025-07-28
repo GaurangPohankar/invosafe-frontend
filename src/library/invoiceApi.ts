@@ -63,7 +63,7 @@ export const invoiceApi = {
       throw new Error('No access token found');
     }
 
-    const response = await fetch(`${API_BASE_URL}/invoice/${invoiceId}`, {
+    const response = await fetch(`${API_BASE_URL}/invoice/?invoice_id=${encodeURIComponent(invoiceId)}`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
@@ -76,8 +76,14 @@ export const invoiceApi = {
       throw new Error(errorData.detail || 'Failed to fetch invoice');
     }
 
-    const data: Invoice = await response.json();
-    return data;
+    const data: Invoice[] = await response.json();
+    
+    // Since the API returns a list, we need to get the first item
+    if (data && data.length > 0) {
+      return data[0];
+    } else {
+      throw new Error('Invoice not found');
+    }
   },
 
   async createInvoice(invoiceData: Partial<Invoice>): Promise<Invoice> {
