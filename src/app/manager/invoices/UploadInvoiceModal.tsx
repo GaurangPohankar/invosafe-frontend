@@ -167,26 +167,14 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
       }
 
       // Check for duplicate invoice
-      const accessToken = localStorage.getItem('access_token');
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-      const checkRes = await fetch(`${API_BASE_URL}/invoice/?invoice_id=${encodeURIComponent(row.invoice_id)}`, {
-        method: 'GET',
-        headers: {
-          'accept': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-      
-      if (checkRes.ok) {
-        const data = await checkRes.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return {
-            row: rowIndex + 1,
-            invoice_id: row.invoice_id,
-            status: 'error',
-            message: 'Invoice ID already exists'
-          };
-        }
+      const invoiceExists = await invoiceApi.checkInvoiceExists(row.invoice_id.trim());
+      if (invoiceExists) {
+        return {
+          row: rowIndex + 1,
+          invoice_id: row.invoice_id,
+          status: 'error',
+          message: 'Invoice ID already exists'
+        };
       }
 
       // Get user details

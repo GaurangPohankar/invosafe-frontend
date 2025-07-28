@@ -230,4 +230,28 @@ export const invoiceApi = {
     const data: Invoice = await response.json();
     return data;
   },
+
+  async checkInvoiceExists(invoiceId: string): Promise<boolean> {
+    const accessToken = localStorage.getItem('access_token');
+    
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/invoice/?invoice_id=${encodeURIComponent(invoiceId)}`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to check invoice existence');
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) && data.length > 0;
+  },
 }; 
