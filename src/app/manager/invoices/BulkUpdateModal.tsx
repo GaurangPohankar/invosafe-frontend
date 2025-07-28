@@ -64,15 +64,15 @@ export default function BulkUpdateModal({
       setCsvData([]);
       setSelectedFile(null);
       
-      // Set update type based on current tab
+      // Set update type based on current tab - dropdown should match the current tab
       if (currentTab === 'Searched') {
         setUpdateType('finance');
       } else if (currentTab === 'Financed') {
-        setUpdateType('repaid');
-      } else if (currentTab === 'Rejected') {
-        setUpdateType('repaid');
-      } else if (currentTab === 'Repaid') {
         setUpdateType('finance');
+      } else if (currentTab === 'Rejected') {
+        setUpdateType('reject');
+      } else if (currentTab === 'Repaid') {
+        setUpdateType('repaid');
       } else {
         setUpdateType('finance');
       }
@@ -101,7 +101,12 @@ export default function BulkUpdateModal({
             } else {
               expectedHeaders = ['invoice_id', 'loan_amount', 'interest_rate', 'disbursement_amount', 'disbursement_date', 'credit_period', 'due_date'];
             }
-          } 
+          } else if (updateType === 'repaid') {
+            // For repaid, only invoice_id is required, due_date is optional
+            expectedHeaders = ['invoice_id'];
+          } else if (updateType === 'reject') {
+            expectedHeaders = ['invoice_id'];
+          }
 
           if (!expectedHeaders.every(header => headers.includes(header))) {
             reject(new Error(`Invalid CSV format. Expected headers: ${expectedHeaders.join(', ')}`));
@@ -195,11 +200,8 @@ export default function BulkUpdateModal({
         if (!row.due_date) {
           return `Row ${i + 2}: Due date is required`;
         }
-      } else if (updateType === 'repaid') {
-        if (!row.due_date) {
-          return `Row ${i + 2}: Due date is required`;
-        }
       }
+      // Removed validation for repaid due_date since it's not required
     }
     
     return null;
@@ -392,6 +394,10 @@ export default function BulkUpdateModal({
   const getExpectedFormat = () => {
     if (updateType === 'finance') {
       return 'invoice_id,loan_amount,interest_rate,disbursement_amount,disbursement_date,credit_period,due_date';
+    } else if (updateType === 'repaid') {
+      return 'invoice_id,due_date (optional)';
+    } else if (updateType === 'reject') {
+      return 'invoice_id';
     } else {
       return 'invoice_id';
     }
