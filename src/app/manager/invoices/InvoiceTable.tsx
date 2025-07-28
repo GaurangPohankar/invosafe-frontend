@@ -259,56 +259,60 @@ export default function InvoiceTable() {
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 p-0 min-h-[500px] flex flex-col">
-        {/* Tabs */}
-        <div className="flex gap-2 px-6 pt-4 pb-4 border-b border-gray-100">
-          {TABS.map((tab) => (
-            <button
-              key={tab.label}
-              onClick={() => setActiveTab(tab.label)}
-              className={`relative px-3 py-1.5 font-medium text-sm focus:outline-none transition-colors
-                ${activeTab === tab.label
-                  ? "text-gray-900"
-                  : "text-gray-500 hover:text-gray-900"}
-              `}
-              style={{ background: "none" }}
-            >
-              {tab.label}
-              {activeTab === tab.label && (
-                <span className="absolute left-0 -bottom-2 w-full h-1 bg-gray-900 rounded-t" />
+        {/* Tabs and Action buttons in same row */}
+        <div className="flex justify-between items-center px-6 pt-4 pb-4 border-b border-gray-100">
+          <div className="flex gap-2">
+            {TABS.map((tab) => (
+              <button
+                key={tab.label}
+                onClick={() => setActiveTab(tab.label)}
+                className={`relative px-3 py-1.5 font-medium text-sm focus:outline-none transition-colors
+                  ${activeTab === tab.label
+                    ? "text-gray-900"
+                    : "text-gray-500 hover:text-gray-900"}
+                `}
+                style={{ background: "none" }}
+              >
+                {tab.label}
+                {activeTab === tab.label && (
+                  <span className="absolute left-0 -bottom-2 w-full h-1 bg-gray-900 rounded-t" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Action buttons */}
+          {!loading && !error && !isEmpty && (
+            <div className="flex items-center gap-4">
+              {selectedInvoices.size > 0 && (
+                <span className="text-sm text-gray-600">
+                  Total selected: {selectedInvoices.size}
+                </span>
               )}
-            </button>
-          ))}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleExport}
+                  disabled={selectedInvoices.size === 0}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedInvoices.size === 0
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  }`}
+                >
+                  Export
+                </button>
+                <button
+                  onClick={handleBulkUpdate}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-green-50 text-green-700 hover:bg-green-100"
+                >
+                  Bulk Update
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Action buttons */}
-        {!loading && !error && !isEmpty && (
-          <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                {selectedInvoices.size} of {filteredData.length} selected
-              </span>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleExport}
-                disabled={selectedInvoices.size === 0}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedInvoices.size === 0
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                }`}
-              >
-                Export
-              </button>
-              <button
-                onClick={handleBulkUpdate}
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-green-50 text-green-700 hover:bg-green-100"
-              >
-                Bulk Update
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {/* Loading, Error, Empty State, or Table */}
         {loading ? (
