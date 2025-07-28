@@ -38,7 +38,13 @@ export default function InvoicesPage() {
         </div>
       </div>
       <InvoiceTable key={tableRefreshKey} />
-      <UploadInvoiceModal open={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />
+      <UploadInvoiceModal 
+        open={uploadModalOpen} 
+        onClose={() => { 
+          setUploadModalOpen(false); 
+          handleTableRefresh(); 
+        }} 
+      />
       <AddInvoiceModal open={addModalOpen} onClose={() => { setAddModalOpen(false); handleTableRefresh(); }} />
     </div>
   );
