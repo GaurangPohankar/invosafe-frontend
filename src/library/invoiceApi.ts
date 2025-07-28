@@ -113,7 +113,7 @@ export const invoiceApi = {
       throw new Error('No access token found');
     }
 
-    const response = await fetch(`${API_BASE_URL}/invoice/${invoiceId}`, {
+    const response = await fetch(`${API_BASE_URL}/invoice/invoice-id/${invoiceId}`, {
       method: 'PUT',
       headers: {
         'accept': 'application/json',
@@ -125,7 +125,21 @@ export const invoiceApi = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Failed to update invoice');
+      
+      // Handle structured error responses
+      if (errorData.detail && Array.isArray(errorData.detail)) {
+        const errorMessages = errorData.detail.map((err: any) => {
+          if (err.msg) {
+            return `${err.loc?.join('.') || 'Field'}: ${err.msg}`;
+          }
+          return err;
+        }).join(', ');
+        throw new Error(errorMessages);
+      } else if (errorData.detail) {
+        throw new Error(errorData.detail);
+      } else {
+        throw new Error('Failed to update invoice');
+      }
     }
 
     const data: Invoice = await response.json();

@@ -9,6 +9,7 @@ import MarkAsFinancedModal from "./MarkAsFinancedModal";
 import RejectFinanceModal from "./RejectFinanceModal";
 import DeleteInvoiceModal from "./DeleteInvoiceModal";
 import MarkAsRepaidModal from "./MarkAsRepaidModal";
+import BulkUpdateModal from "./BulkUpdateModal";
 import { invoiceApi } from "@/library/invoiceApi";
 import { authenticationApi } from "@/library/authenticationApi";
 import Image from "next/image";
@@ -32,6 +33,12 @@ interface Invoice {
   invoice_amount?: number;
   seller_business?: { name: string };
   buyer_business?: { name: string };
+  loan_amount?: string;
+  interest_rate?: string;
+  disbursement_amount?: string;
+  disbursement_date?: string;
+  credit_period?: string;
+  due_date?: string;
 }
 
 const STATUS_MAP = {
@@ -61,9 +68,12 @@ export default function InvoiceTable() {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [repaidModalOpen, setRepaidModalOpen] = useState(false);
+  const [bulkUpdateModalOpen, setBulkUpdateModalOpen] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedInvoices, setSelectedInvoices] = useState<Set<number>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
   // Fetch invoices function (moved outside useEffect)
   const fetchInvoices = async () => {
@@ -95,6 +105,12 @@ export default function InvoiceTable() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  // Reset selections when tab changes
+  useEffect(() => {
+    setSelectedInvoices(new Set());
+    setSelectAll(false);
+  }, [activeTab]);
+
   // Helper to fetch invoices by lender and status
   async function fetchInvoicesByLenderAndStatus(lenderId: number, status?: string) {
     const accessToken = localStorage.getItem('access_token');
@@ -121,6 +137,94 @@ export default function InvoiceTable() {
     return true;
   });
   const isEmpty = filteredData.length === 0;
+
+  // Handle select all
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedInvoices(new Set(filteredData.map(invoice => invoice.id)));
+    } else {
+      setSelectedInvoices(new Set());
+    }
+  };
+
+  // Handle individual selection
+  const handleSelectInvoice = (invoiceId: number, checked: boolean) => {
+    const newSelected = new Set(selectedInvoices);
+    if (checked) {
+      newSelected.add(invoiceId);
+    } else {
+      newSelected.delete(invoiceId);
+    }
+    setSelectedInvoices(newSelected);
+    setSelectAll(newSelected.size === filteredData.length);
+  };
+
+  // Export selected invoices to CSV
+  const handleExport = () => {
+    if (selectedInvoices.size === 0) {
+      alert('Please select at least one invoice to export');
+      return;
+    }
+
+    const selectedInvoiceData = filteredData.filter(invoice => selectedInvoices.has(invoice.id));
+    
+    // Create CSV content with all invoice details
+    const headers = [
+      'invoice_id',
+      'tax_amount',
+      'purchase_order_number',
+      'lorry_receipt',
+      'eway_bill',
+      'seller_gst',
+      'buyer_gst',
+      'status',
+      'loan_amount',
+      'interest_rate',
+      'disbursement_amount',
+      'disbursement_date',
+      'credit_period',
+      'due_date',
+      'invoice_amount'
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...selectedInvoiceData.map(invoice => [
+        invoice.invoice_id,
+        invoice.tax_amount,
+        invoice.purchase_order_number || '',
+        invoice.lorry_receipt || '',
+        invoice.eway_bill || '',
+        invoice.seller_gst,
+        invoice.buyer_gst,
+        STATUS_MAP[invoice.status as keyof typeof STATUS_MAP]?.label || invoice.status,
+        invoice.loan_amount || '',
+        invoice.interest_rate || '',
+        invoice.disbursement_amount || '',
+        invoice.disbursement_date || '',
+        invoice.credit_period || '',
+        invoice.due_date || '',
+        invoice.invoice_amount || ''
+      ].join(','))
+    ].join('\n');
+
+    // Download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `invoices_${activeTab.toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Handle bulk update
+  const handleBulkUpdate = () => {
+    setBulkUpdateModalOpen(true);
+  };
 
   const handleView = (invoice: any) => {
     setSelectedInvoice(invoice);
@@ -175,6 +279,37 @@ export default function InvoiceTable() {
             </button>
           ))}
         </div>
+
+        {/* Action buttons */}
+        {!loading && !error && !isEmpty && (
+          <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                {selectedInvoices.size} of {filteredData.length} selected
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleExport}
+                disabled={selectedInvoices.size === 0}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedInvoices.size === 0
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                }`}
+              >
+                Export
+              </button>
+              <button
+                onClick={handleBulkUpdate}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-green-50 text-green-700 hover:bg-green-100"
+              >
+                Bulk Update
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Loading, Error, Empty State, or Table */}
         {loading ? (
           <div className="flex-1 flex items-center justify-center py-16">
@@ -206,7 +341,13 @@ export default function InvoiceTable() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="bg-gray-50">
-                  {/* Remove checkbox column */}
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">
+                    <input 
+                      type="checkbox" 
+                      checked={selectAll}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Unique ID</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Seller</th>
                   <th className="px-6 py-3 text-left font-medium text-gray-500">Buyer</th>
@@ -220,18 +361,24 @@ export default function InvoiceTable() {
               <tbody>
                 {filteredData.map((row, idx) => (
                   <tr key={idx} className="border-b last:border-0">
-                    {/* Remove checkbox cell */}
+                    <td className="px-4 py-4">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedInvoices.has(row.id)}
+                        onChange={(e) => handleSelectInvoice(row.id, e.target.checked)}
+                      />
+                    </td>
                     <td className="px-6 py-4 font-medium text-gray-900">{row.invoice_id}</td>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-gray-900">{row.seller_business?.name || row.seller_id}</div>
-                      <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block mt-1">
-                        GST: {row.seller_gst}
+                      <div className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-0.5 inline-block mt-1">
+                        {row.seller_gst}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-gray-900">{row.buyer_business?.name || row.buyer_id}</div>
-                      <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block mt-1">
-                        GST: {row.buyer_gst}
+                      <div className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-0.5 inline-block mt-1">
+                        {row.buyer_gst}
                       </div>
                     </td>
                     <td className="px-6 py-4">{row.purchase_order_number || '-'}</td>
@@ -338,6 +485,17 @@ export default function InvoiceTable() {
         invoice={selectedInvoice}
         onSubmit={() => {
           setRepaidModalOpen(false);
+          fetchInvoices();
+        }}
+      />
+      <BulkUpdateModal
+        open={bulkUpdateModalOpen}
+        onClose={() => setBulkUpdateModalOpen(false)}
+        currentTab={activeTab}
+        onSubmit={() => {
+          setBulkUpdateModalOpen(false);
+          setSelectedInvoices(new Set());
+          setSelectAll(false);
           fetchInvoices();
         }}
       />
