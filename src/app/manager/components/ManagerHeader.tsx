@@ -44,7 +44,11 @@ const ManagerHeader: React.FC = () => {
       setSearchResults(invoice);
       setShowInvoiceModal(true);
     } catch (error: any) {
-      setSearchError("Unable to find invoice with this ID");
+      setSearchError("Not found");
+      // Hide error after 1 second
+      setTimeout(() => {
+        setSearchError(null);
+      }, 1000);
     } finally {
       setIsSearching(false);
     }
@@ -171,7 +175,9 @@ const ManagerHeader: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by invoice ID..."
-                  className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
+                  className={`dark:bg-dark-900 h-11 w-full rounded-lg border bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px] ${
+                    searchError ? 'border-red-300 focus:border-red-300' : 'border-gray-200 focus:border-brand-300'
+                  }`}
                 />
 
                 <button 
@@ -188,13 +194,19 @@ const ManagerHeader: React.FC = () => {
                     </>
                   )}
                 </button>
+
+                {searchError && (
+                  <div className="absolute top-full left-0 mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 animate-fade-in">
+                    {searchError}
+                  </div>
+                )}
+                
               </div>
+
+              
+
             </form>
-            {searchError && (
-              <div className="absolute top-full left-0 mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                {searchError}
-              </div>
-            )}
+            
           </div>
         </div>
         <div
