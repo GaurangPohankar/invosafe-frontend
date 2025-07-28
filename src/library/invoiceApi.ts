@@ -7,8 +7,10 @@ interface Invoice {
   purchase_order_number: string;
   lorry_receipt: string;
   eway_bill: string;
-  seller_pan: string;
-  buyer_pan: string;
+  seller_id: number;
+  seller_gst: string;
+  buyer_id: number;
+  buyer_gst: string;
   status: number;
   created_at: string;
   updated_at: string;
@@ -18,6 +20,7 @@ interface Invoice {
   disbursement_date?: string;
   credit_period?: string;
   due_date?: string;
+  invoice_amount?: number;
 }
 
 interface InvoiceResponse {
@@ -110,7 +113,7 @@ export const invoiceApi = {
       throw new Error('No access token found');
     }
 
-    const response = await fetch(`${API_BASE_URL}/invoice/${invoiceId}`, {
+    const response = await fetch(`${API_BASE_URL}/invoice/invoice-id/${invoiceId}`, {
       method: 'PUT',
       headers: {
         'accept': 'application/json',
@@ -122,7 +125,21 @@ export const invoiceApi = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Failed to update invoice');
+      
+      // Handle structured error responses
+      if (errorData.detail && Array.isArray(errorData.detail)) {
+        const errorMessages = errorData.detail.map((err: any) => {
+          if (err.msg) {
+            return `${err.loc?.join('.') || 'Field'}: ${err.msg}`;
+          }
+          return err;
+        }).join(', ');
+        throw new Error(errorMessages);
+      } else if (errorData.detail) {
+        throw new Error(errorData.detail);
+      } else {
+        throw new Error('Failed to update invoice');
+      }
     }
 
     const data: Invoice = await response.json();
@@ -226,5 +243,29 @@ export const invoiceApi = {
 
     const data: Invoice = await response.json();
     return data;
+  },
+
+  async checkInvoiceExists(invoiceId: string): Promise<boolean> {
+    const accessToken = localStorage.getItem('access_token');
+    
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/invoice/?invoice_id=${encodeURIComponent(invoiceId)}`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to check invoice existence');
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) && data.length > 0;
   },
 }; 

@@ -1,10 +1,9 @@
 "use client";
 
 import type { Metadata } from "next";
-import React from "react";
+import React, { useState } from "react";
 import InvoiceTable from "./InvoiceTable";
 import { UploadIcon } from "@/icons/index";
-import { useState } from "react";
 import UploadInvoiceModal from "./UploadInvoiceModal";
 import AddInvoiceModal from "./AddInvoiceModal";
 
@@ -12,6 +11,10 @@ import AddInvoiceModal from "./AddInvoiceModal";
 export default function InvoicesPage() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [tableRefreshKey, setTableRefreshKey] = useState(0);
+
+  const handleTableRefresh = () => setTableRefreshKey(k => k + 1);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -34,9 +37,15 @@ export default function InvoicesPage() {
           </button>
         </div>
       </div>
-      <InvoiceTable />
-      <UploadInvoiceModal open={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />
-      <AddInvoiceModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
+      <InvoiceTable key={tableRefreshKey} />
+      <UploadInvoiceModal 
+        open={uploadModalOpen} 
+        onClose={() => { 
+          setUploadModalOpen(false); 
+          handleTableRefresh(); 
+        }} 
+      />
+      <AddInvoiceModal open={addModalOpen} onClose={() => { setAddModalOpen(false); handleTableRefresh(); }} />
     </div>
   );
 } 
