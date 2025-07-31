@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import type { Metadata } from "next";
+import RouteProtection from "../components/RouteProtection";
 import BuyCreditsModal from "./BuyCreditsModal";
 
 
@@ -14,18 +14,19 @@ export default function CreditsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-title-md2 font-bold text-black dark:text-white">
-          Credits & Billing
-        </h2>
-        <button
-          className="inline-flex items-center justify-center rounded-md bg-brand-500 px-6 py-2.5 text-center font-medium text-white hover:bg-brand-600"
-          onClick={() => setBuyModalOpen(true)}
-        >
-          +  Add Credits
-        </button>
-      </div>
+    <RouteProtection allowedRoles={["MANAGER"]}>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-title-md2 font-bold text-black dark:text-white">
+            Credits & Billing
+          </h2>
+          <button
+            className="inline-flex items-center justify-center rounded-md bg-brand-500 px-6 py-2.5 text-center font-medium text-white hover:bg-brand-600"
+            onClick={() => setBuyModalOpen(true)}
+          >
+            +  Add Credits
+          </button>
+        </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -141,6 +142,7 @@ export default function CreditsPage() {
         </div>
       </div>
       <BuyCreditsModal open={buyModalOpen} onClose={() => setBuyModalOpen(false)} onBuy={handleBuyCredits} />
-    </div>
+      </div>
+    </RouteProtection>
   );
 } 

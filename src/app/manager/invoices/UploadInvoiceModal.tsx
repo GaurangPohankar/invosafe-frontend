@@ -169,12 +169,12 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
       // Check for duplicate invoice
       const invoiceExists = await invoiceApi.checkInvoiceExists(row.invoice_id.trim());
       if (invoiceExists) {
-        return {
-          row: rowIndex + 1,
-          invoice_id: row.invoice_id,
-          status: 'error',
-          message: 'Invoice ID already exists'
-        };
+          return {
+            row: rowIndex + 1,
+            invoice_id: row.invoice_id,
+            status: 'error',
+            message: 'Invoice ID already exists'
+          };
       }
 
       // Get user details

@@ -44,9 +44,9 @@ export default function SignInPage() {
         case "ADMIN":
           router.push("/admin");
           break;
-        default:
-          // Default fallback
-          router.push("/admin");
+        case "USER":
+            router.push("/manager");
+            break;
       }
     } catch (error) {
       setError("Invalid email or password. Please try again.");

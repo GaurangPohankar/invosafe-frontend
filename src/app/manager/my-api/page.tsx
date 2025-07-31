@@ -1,8 +1,7 @@
 "use client";
-import type { Metadata } from "next";
 import React, { useState } from "react";
+import RouteProtection from "../components/RouteProtection";
 import Button from "@/components/ui/button/Button";
-import { Modal } from "@/components/ui/modal";
 import { TrashBinIcon } from "@/icons/index";
 import GenerateKeyModal from "./GenerateKeyModal";
 import DeleteKeyModal from "./DeleteKeyModal";
@@ -67,15 +66,16 @@ export default function MyApiPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-title-md2 font-bold text-black dark:text-white">
-          My API
-        </h2>
-        <Button onClick={handleGenerateKey}>
-          +  Generate New API Key
-        </Button>
-      </div>
+    <RouteProtection allowedRoles={["MANAGER"]}>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-title-md2 font-bold text-black dark:text-white">
+            My API
+          </h2>
+          <Button onClick={handleGenerateKey}>
+            +  Generate New API Key
+          </Button>
+        </div>
 
       <div className="grid grid-cols-1 gap-6">
         <div className="rounded-xl border border-gray-200 bg-white p-0 shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -126,6 +126,7 @@ export default function MyApiPage() {
         keyTitle={keyToDelete?.label || ""}
         onDelete={handleDeleteConfirm}
       />
-    </div>
+      </div>
+    </RouteProtection>
   );
 } 
