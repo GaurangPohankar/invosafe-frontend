@@ -33,7 +33,7 @@ export default function BuyCreditsModal({
         throw new Error('No lender ID found');
       }
 
-      await creditsApi.purchaseCredits({
+      const result = await creditsApi.purchaseCredits({
         lender_id: parseInt(lenderId),
         credits_amount: num,
         description: `Credit purchase of ${num} credits`,
