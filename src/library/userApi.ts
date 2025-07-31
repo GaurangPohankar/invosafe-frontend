@@ -21,6 +21,13 @@ interface UpdateUserStatusRequest {
   status: string;
 }
 
+interface UpdateUserRequest {
+  name?: string;
+  email?: string;
+  password?: string;
+  status?: string;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const userApi = {
@@ -111,6 +118,27 @@ export const userApi = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Failed to update user status');
+    }
+    return await response.json();
+  },
+
+  async updateUser(userId: number, userData: UpdateUserRequest): Promise<User> {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+    const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to update user');
     }
     return await response.json();
   },

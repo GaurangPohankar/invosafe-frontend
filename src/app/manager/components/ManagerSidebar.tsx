@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useRef, useState,useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "@/context/SidebarContext";
+import { authenticationApi } from "@/library/authenticationApi";
 import {
   ChevronDownIcon,
   GridIcon,
@@ -20,6 +20,7 @@ type NavItem = {
   icon: React.ReactNode;
   path?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  roles?: string[]; // Array of roles that can access this item
 };
 
 const managerNavItems: NavItem[] = [
@@ -27,32 +28,57 @@ const managerNavItems: NavItem[] = [
     icon: <GridIcon />,
     name: "Dashboard",
     path: "/manager",
+    roles: ["MANAGER", "USER"],
   },
   {
     icon: <TableIcon />,
     name: "Invoices",
     path: "/manager/invoices",
+    roles: ["MANAGER", "USER"],
   },
   {
     icon: <UserCircleIcon />,
     name: "Users",
     path: "/manager/users",
+    roles: ["MANAGER"], // Only managers can access users
   },
   {
     icon: <PlugInIcon />,
     name: "My API",
     path: "/manager/my-api",
+    roles: ["MANAGER"], // Only managers can access API
   },
   {
     icon: <DollarLineIcon />,
     name: "Credits",
     path: "/manager/credits",
+    roles: ["MANAGER"], // Only managers can access credits
   },
 ];
 
 const ManagerSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Get user role on component mount
+  useEffect(() => {
+    const role = authenticationApi.getUserRole();
+    setUserRole(role);
+  }, []);
+
+  // Filter navigation items based on user role
+  const getFilteredNavItems = useCallback(() => {
+    if (!userRole) return [];
+    
+    return managerNavItems.filter(item => {
+      // If no roles specified, allow access (for backward compatibility)
+      if (!item.roles) return true;
+      
+      // Check if user's role is in the allowed roles
+      return item.roles.includes(userRole);
+    });
+  }, [userRole]);
 
   const renderMenuItems = (navItems: NavItem[]) => (
     <ul className="flex flex-col gap-4">
@@ -279,7 +305,7 @@ const ManagerSidebar: React.FC = () => {
                   <HorizontaLDots />
                 )}
               </h2>
-              {renderMenuItems(managerNavItems)}
+              {renderMenuItems(getFilteredNavItems())}
             </div>
           </div>
         </nav>
