@@ -6,31 +6,46 @@ import ResetPasswordModal from "./ResetPasswordModal";
 import BlockUnblockModal from "./BlockUnblockModal";
 import DeleteUserModal from "./DeleteUserModal";
 
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  lender_id: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function UsersPage() {
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Handlers for UserTable actions
-  const handleResetPassword = (user: any) => {
+  const handleResetPassword = (user: User) => {
     setSelectedUser(user);
     setNewPassword(Math.random().toString(36).slice(-10));
     setResetPasswordOpen(true);
   };
-  const handleBlockUnblock = (user: any) => {
+  
+  const handleBlockUnblock = (user: User) => {
     setSelectedUser(user);
     setBlockOpen(true);
   };
-  const handleDelete = (user: any) => {
+  
+  const handleDelete = (user: User) => {
     setSelectedUser(user);
     setDeleteOpen(true);
   };
-  const handleAddUser = (user: { name: string; email: string; password: string }) => {
-    // Add user logic here
-    setAddUserOpen(false);
+  
+  const handleAddUserSuccess = () => {
+    // Force table refresh by changing the key
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -45,14 +60,15 @@ export default function UsersPage() {
         </button>
       </div>
       <UserTable
+        refreshTrigger={refreshKey}
         onResetPassword={handleResetPassword}
         onBlockUnblock={handleBlockUnblock}
         onDelete={handleDelete}
       />
-      <AddUserModal open={addUserOpen} onClose={() => setAddUserOpen(false)} onAddUser={handleAddUser} />
+      <AddUserModal open={addUserOpen} onClose={() => setAddUserOpen(false)} onSuccess={handleAddUserSuccess} />
       <ResetPasswordModal open={resetPasswordOpen} onClose={() => setResetPasswordOpen(false)} user={selectedUser} newPassword={newPassword} onDone={() => setResetPasswordOpen(false)} />
-      <BlockUnblockModal open={blockOpen} onClose={() => setBlockOpen(false)} user={selectedUser} onConfirm={() => setBlockOpen(false)} />
-      <DeleteUserModal open={deleteOpen} onClose={() => setDeleteOpen(false)} user={selectedUser} onConfirm={() => setDeleteOpen(false)} />
+      <BlockUnblockModal open={blockOpen} onClose={() => setBlockOpen(false)} user={selectedUser} onSuccess={handleAddUserSuccess} />
+      <DeleteUserModal open={deleteOpen} onClose={() => setDeleteOpen(false)} user={selectedUser} onSuccess={handleAddUserSuccess} />
     </div>
   );
 } 
