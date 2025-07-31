@@ -201,6 +201,10 @@ export const authenticationApi = {
     return !!localStorage.getItem('access_token');
   },
 
+  getUserRole(): string | null {
+    return localStorage.getItem('role');
+  },
+
   getUserDetails(): {
     access_token: string | null;
     token_type: string | null;
