@@ -48,7 +48,7 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
 
   if (!invoice) return null;
   const statusNum = Number(invoice.status);
-  const showFinanceBox = [
+  const showFinanceBox = statusNum === 1 && [
     invoice.loan_amount,
     invoice.interest_rate,
     invoice.disbursement_amount,
@@ -95,15 +95,33 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
             <div>
               <div className="mb-2 text-xs text-gray-500">Seller</div>
               <div className="font-semibold text-gray-900">{invoice.seller_business?.name || sellerName || invoice.seller_id}</div>
-              <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block mt-1">
-                GST: {invoice.seller_gst}
+              <div className="flex gap-2 mt-1">
+                {invoice.seller_gst && invoice.seller_gst.trim() !== '' && (
+                  <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block">
+                    GST: {invoice.seller_gst}
+                  </div>
+                )}
+                {invoice.seller_pan && invoice.seller_pan !== '0' && invoice.seller_pan.trim() !== '' && (
+                  <div className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-0.5 inline-block">
+                    PAN: {invoice.seller_pan}
+                  </div>
+                )}
               </div>
             </div>
             <div>
               <div className="mb-2 text-xs text-gray-500">Buyer</div>
               <div className="font-semibold text-gray-900">{invoice.buyer_business?.name || buyerName || invoice.buyer_id}</div>
-              <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block mt-1">
-                GST: {invoice.buyer_gst}
+              <div className="flex gap-2 mt-1">
+                {invoice.buyer_gst && invoice.buyer_gst.trim() !== '' && (
+                  <div className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-0.5 inline-block">
+                    GST: {invoice.buyer_gst}
+                  </div>
+                )}
+                {invoice.buyer_pan && invoice.buyer_pan !== '0' && invoice.buyer_pan.trim() !== '' && (
+                  <div className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-0.5 inline-block">
+                    PAN: {invoice.buyer_pan}
+                  </div>
+                )}
               </div>
             </div>
             <div>

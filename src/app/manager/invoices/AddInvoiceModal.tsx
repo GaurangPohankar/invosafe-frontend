@@ -75,7 +75,7 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
         const { business, gst_list } = await businessApi.getGstListByPan(sellerInput.trim());
         setSellerBusiness(business);
         setSellerGSTList(gst_list);
-        setSellerSelectedGST(""); // Require user to select GST
+        setSellerSelectedGST(""); // Require user to select GST if available
       } catch (err: any) {
         setSellerError(err.message || "Failed to fetch GST list");
       } finally {
@@ -124,7 +124,7 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
         const { business, gst_list } = await businessApi.getGstListByPan(buyerInput.trim());
         setBuyerBusiness(business);
         setBuyerGSTList(gst_list);
-        setBuyerSelectedGST(""); // Require user to select GST
+        setBuyerSelectedGST(""); // Require user to select GST if available
       } catch (err: any) {
         setBuyerError(err.message || "Failed to fetch GST list");
       } finally {
@@ -166,8 +166,8 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
 
   // Validation
   function validateForm() {
-    if (!sellerBusiness || !sellerSelectedGST) return "Select a valid seller and GST";
-    if (!buyerBusiness || !buyerSelectedGST) return "Select a valid buyer and GST";
+    if (!sellerBusiness) return "Select a valid seller";
+    if (!buyerBusiness) return "Select a valid buyer";
     if (!invoiceId.trim()) return "Invoice ID is required";
     if (!invoiceAmount || isNaN(Number(invoiceAmount)) || Number(invoiceAmount) <= 0) return "Enter a valid invoice amount";
     if (!taxAmount || isNaN(Number(taxAmount)) || Number(taxAmount) < 0) return "Enter a valid tax amount";
@@ -175,8 +175,8 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
   }
 
   const isFormValid =
-    !!sellerBusiness && !!sellerSelectedGST &&
-    !!buyerBusiness && !!buyerSelectedGST &&
+    !!sellerBusiness &&
+    !!buyerBusiness &&
     !!invoiceId.trim() &&
     !!invoiceAmount && !isNaN(Number(invoiceAmount)) && Number(invoiceAmount) > 0 &&
     !!taxAmount && !isNaN(Number(taxAmount)) && Number(taxAmount) >= 0;
@@ -221,9 +221,11 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
       await invoiceApi.createInvoice({
         invoice_id: invoiceId.trim(),
         seller_id: sellerBusiness.id,
-        seller_gst: sellerSelectedGST,
+        seller_pan: sellerBusiness.pan || '0',
+        seller_gst: sellerSelectedGST || '',
         buyer_id: buyerBusiness.id,
-        buyer_gst: buyerSelectedGST,
+        buyer_pan: buyerBusiness.pan || '0',
+        buyer_gst: buyerSelectedGST || '',
         purchase_order_number: purchaseOrderNo,
         lorry_receipt: lorryReceipt,
         eway_bill: ewayBill,
@@ -265,7 +267,7 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
               <div className="font-medium text-sm mb-1">Seller's Details</div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm"
+                  className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm bg-white"
                   placeholder="Search by PAN/GSTIN"
                   value={sellerInput}
                   onChange={handleSellerInputChange}
@@ -283,17 +285,22 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
               {sellerError && <div className="text-xs text-error-500 mt-1">{sellerError}</div>}
               {sellerGSTList.length > 0 && (
                 <div className="mt-2">
-                  <label className="block text-xs font-medium mb-1">Select GST</label>
+                  <label className="block text-xs font-medium mb-1">Select GST (Optional)</label>
                   <select
-                    className="border border-gray-200 rounded px-3 py-2 text-sm w-full"
+                    className="border border-gray-200 rounded px-3 py-2 text-sm w-full bg-white"
                     value={sellerSelectedGST}
                     onChange={e => handleSellerGSTSelect(e.target.value)}
                   >
-                    <option value="">Select GST</option>
+                    <option value="">No GST (Continue without GST)</option>
                     {sellerGSTList.map(gst => (
                       <option key={gst} value={gst}>{gst}</option>
                     ))}
                   </select>
+                </div>
+              )}
+              {sellerBusiness && sellerGSTList.length === 0 && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                  No GST found for this PAN. You can continue without GST.
                 </div>
               )}
               <BusinessInfoCard business={sellerBusiness} />
@@ -302,7 +309,7 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
               <div className="font-medium text-sm mb-1">Buyer's Details</div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm"
+                  className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm bg-white"
                   placeholder="Search by PAN/GSTIN"
                   value={buyerInput}
                   onChange={handleBuyerInputChange}
@@ -320,17 +327,22 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
               {buyerError && <div className="text-xs text-error-500 mt-1">{buyerError}</div>}
               {buyerGSTList.length > 0 && (
                 <div className="mt-2">
-                  <label className="block text-xs font-medium mb-1">Select GST</label>
+                  <label className="block text-xs font-medium mb-1">Select GST (Optional)</label>
                   <select
-                    className="border border-gray-200 rounded px-3 py-2 text-sm w-full"
+                    className="border border-gray-200 rounded px-3 py-2 text-sm w-full bg-white"
                     value={buyerSelectedGST}
                     onChange={e => handleBuyerGSTSelect(e.target.value)}
                   >
-                    <option value="">Select GST</option>
+                    <option value="">No GST (Continue without GST)</option>
                     {buyerGSTList.map(gst => (
                       <option key={gst} value={gst}>{gst}</option>
                     ))}
                   </select>
+                </div>
+              )}
+              {buyerBusiness && buyerGSTList.length === 0 && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                  No GST found for this PAN. You can continue without GST.
                 </div>
               )}
               <BusinessInfoCard business={buyerBusiness} />

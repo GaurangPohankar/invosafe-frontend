@@ -7,6 +7,8 @@ import { authenticationApi } from "@/library/authenticationApi";
 
 interface CSVRow {
   invoice_id: string;
+  seller_pan: string;
+  buyer_pan: string;
   seller_gst: string;
   buyer_gst: string;
   purchase_order_number: string;
@@ -26,6 +28,10 @@ interface ValidationResult {
 
 function isGSTIN(value: string) {
   return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(value.trim());
+}
+
+function isPAN(value: string) {
+  return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(value.trim());
 }
 
 export default function UploadInvoiceModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -49,7 +55,7 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
           const headers = lines[0].split(',').map(h => h.trim());
           
           const expectedHeaders = [
-            'invoice_id', 'seller_gst', 'buyer_gst', 
+            'invoice_id', 'seller_pan', 'buyer_pan', 'seller_gst', 'buyer_gst', 
             'purchase_order_number', 'invoice_amount', 'tax_amount', 
             'lorry_receipt', 'eway_bill'
           ];
@@ -63,16 +69,20 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
           for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(',').map(v => v.trim());
             if (values.length === expectedHeaders.length) {
-              data.push({
+              const row: CSVRow = {
                 invoice_id: values[0],
-                seller_gst: values[1],
-                buyer_gst: values[2],
-                purchase_order_number: values[3],
-                invoice_amount: values[4],
-                tax_amount: values[5],
-                lorry_receipt: values[6],
-                eway_bill: values[7]
-              });
+                seller_pan: values[1],
+                buyer_pan: values[2],
+                seller_gst: values[3],
+                buyer_gst: values[4],
+                purchase_order_number: values[5],
+                invoice_amount: values[6],
+                tax_amount: values[7],
+                lorry_receipt: values[8],
+                eway_bill: values[9]
+              };
+              
+              data.push(row);
             }
           }
           resolve(data);
@@ -98,21 +108,40 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
         };
       }
 
-      if (!row.seller_gst.trim()) {
+      if (!row.seller_pan.trim()) {
         return {
           row: rowIndex + 1,
           invoice_id: row.invoice_id,
           status: 'error',
-          message: 'Seller GST is required'
+          message: 'Seller PAN is required'
         };
       }
 
-      if (!row.buyer_gst.trim()) {
+      if (!row.buyer_pan.trim()) {
         return {
           row: rowIndex + 1,
           invoice_id: row.invoice_id,
           status: 'error',
-          message: 'Buyer GST is required'
+          message: 'Buyer PAN is required'
+        };
+      }
+
+      // GST is now optional, but we need to validate format if provided
+      if (row.seller_gst.trim() && !isGSTIN(row.seller_gst)) {
+        return {
+          row: rowIndex + 1,
+          invoice_id: row.invoice_id,
+          status: 'error',
+          message: 'Invalid seller GST format'
+        };
+      }
+
+      if (row.buyer_gst.trim() && !isGSTIN(row.buyer_gst)) {
+        return {
+          row: rowIndex + 1,
+          invoice_id: row.invoice_id,
+          status: 'error',
+          message: 'Invalid buyer GST format'
         };
       }
 
@@ -134,36 +163,98 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
         };
       }
 
-      // Validate seller GST
+      // Validate seller GST (optional) and get business info
       let sellerBusiness = null;
       let sellerGST = '';
       
-      if (isGSTIN(row.seller_gst)) {
-        sellerBusiness = await businessApi.getBusinessInfoByGst(row.seller_gst.trim());
-        sellerGST = row.seller_gst.trim();
-      } else {
+      if (row.seller_gst.trim() && isGSTIN(row.seller_gst)) {
+        try {
+          sellerBusiness = await businessApi.getBusinessInfoByGst(row.seller_gst.trim());
+          sellerGST = row.seller_gst.trim();
+        } catch (error: any) {
+          return {
+            row: rowIndex + 1,
+            invoice_id: row.invoice_id,
+            status: 'error',
+            message: `Seller GST not found: ${row.seller_gst.trim()}`
+          };
+        }
+      } else if (row.seller_gst.trim()) {
         return {
           row: rowIndex + 1,
           invoice_id: row.invoice_id,
           status: 'error',
           message: 'Invalid seller GST format'
         };
+      } else {
+        // No GST provided, try to get business info by PAN
+        if (row.seller_pan && isPAN(row.seller_pan)) {
+          try {
+            const { business } = await businessApi.getGstListByPan(row.seller_pan.trim());
+            sellerBusiness = business;
+          } catch (error: any) {
+            return {
+              row: rowIndex + 1,
+              invoice_id: row.invoice_id,
+              status: 'error',
+              message: `Seller PAN not found: ${row.seller_pan.trim()}`
+            };
+          }
+        } else {
+          return {
+            row: rowIndex + 1,
+            invoice_id: row.invoice_id,
+            status: 'error',
+            message: 'Seller PAN is required when GST is not provided'
+          };
+        }
       }
 
-      // Validate buyer GST
+      // Validate buyer GST (optional) and get business info
       let buyerBusiness = null;
       let buyerGST = '';
       
-      if (isGSTIN(row.buyer_gst)) {
-        buyerBusiness = await businessApi.getBusinessInfoByGst(row.buyer_gst.trim());
-        buyerGST = row.buyer_gst.trim();
-      } else {
+      if (row.buyer_gst.trim() && isGSTIN(row.buyer_gst)) {
+        try {
+          buyerBusiness = await businessApi.getBusinessInfoByGst(row.buyer_gst.trim());
+          buyerGST = row.buyer_gst.trim();
+        } catch (error: any) {
+          return {
+            row: rowIndex + 1,
+            invoice_id: row.invoice_id,
+            status: 'error',
+            message: `Buyer GST not found: ${row.buyer_gst.trim()}`
+          };
+        }
+      } else if (row.buyer_gst.trim()) {
         return {
           row: rowIndex + 1,
           invoice_id: row.invoice_id,
           status: 'error',
           message: 'Invalid buyer GST format'
         };
+      } else {
+        // No GST provided, try to get business info by PAN
+        if (row.buyer_pan && isPAN(row.buyer_pan)) {
+          try {
+            const { business } = await businessApi.getGstListByPan(row.buyer_pan.trim());
+            buyerBusiness = business;
+          } catch (error: any) {
+            return {
+              row: rowIndex + 1,
+              invoice_id: row.invoice_id,
+              status: 'error',
+              message: `Buyer PAN not found: ${row.buyer_pan.trim()}`
+            };
+          }
+        } else {
+          return {
+            row: rowIndex + 1,
+            invoice_id: row.invoice_id,
+            status: 'error',
+            message: 'Buyer PAN is required when GST is not provided'
+          };
+        }
       }
 
       // Check for duplicate invoice
@@ -192,9 +283,11 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
       const invoiceData = {
         invoice_id: row.invoice_id.trim(),
         seller_id: sellerBusiness.id,
-        seller_gst: sellerGST,
+        seller_pan: sellerBusiness.pan || '0',
+        seller_gst: sellerGST || '',
         buyer_id: buyerBusiness.id,
-        buyer_gst: buyerGST,
+        buyer_pan: buyerBusiness.pan || '0',
+        buyer_gst: buyerGST || '',
         purchase_order_number: row.purchase_order_number,
         lorry_receipt: row.lorry_receipt,
         eway_bill: row.eway_bill,
@@ -321,6 +414,9 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
         {currentStep === 'upload' && (
           <div className="pt-2 pb-6">
             <div className="mb-4">
+              <div className="text-sm text-gray-600 mb-2">
+                <strong>New CSV Format:</strong> PAN fields are now mandatory, GST fields are optional.
+              </div>
               <a
                 href="/sample-invoice.csv"
                 download

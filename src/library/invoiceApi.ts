@@ -8,8 +8,10 @@ interface Invoice {
   lorry_receipt: string;
   eway_bill: string;
   seller_id: number;
+  seller_pan: string;
   seller_gst: string;
   buyer_id: number;
+  buyer_pan: string;
   buyer_gst: string;
   status: number;
   created_at: string;

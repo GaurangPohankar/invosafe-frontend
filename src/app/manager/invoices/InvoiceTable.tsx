@@ -24,8 +24,10 @@ interface Invoice {
   lorry_receipt: string;
   eway_bill: string;
   seller_id: number;
+  seller_pan: string;
   seller_gst: string;
   buyer_id: number;
+  buyer_pan: string;
   buyer_gst: string;
   status: number;
   created_at: string;
@@ -176,7 +178,9 @@ export default function InvoiceTable() {
       'purchase_order_number',
       'lorry_receipt',
       'eway_bill',
+      'seller_pan',
       'seller_gst',
+      'buyer_pan',
       'buyer_gst',
       'status',
       'loan_amount',
@@ -196,7 +200,9 @@ export default function InvoiceTable() {
         invoice.purchase_order_number || '',
         invoice.lorry_receipt || '',
         invoice.eway_bill || '',
+        invoice.seller_pan || '',
         invoice.seller_gst,
+        invoice.buyer_pan || '',
         invoice.buyer_gst,
         STATUS_MAP[invoice.status as keyof typeof STATUS_MAP]?.label || invoice.status,
         invoice.loan_amount || '',
@@ -282,7 +288,7 @@ export default function InvoiceTable() {
         </div>
 
           {/* Action buttons */}
-          {!loading && !error && !isEmpty && (
+          {!loading && !error && (
             <div className="flex items-center gap-4">
               {selectedInvoices.size > 0 && (
                 <span className="text-sm text-gray-600">
@@ -375,15 +381,9 @@ export default function InvoiceTable() {
                     <td className="px-6 py-4 font-medium text-gray-900">{row.invoice_id}</td>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-gray-900">{row.seller_business?.name || row.seller_id}</div>
-                      <div className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-0.5 inline-block mt-1">
-                        {row.seller_gst}
-                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-gray-900">{row.buyer_business?.name || row.buyer_id}</div>
-                      <div className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-0.5 inline-block mt-1">
-                        {row.buyer_gst}
-                      </div>
                     </td>
                     <td className="px-6 py-4">{row.purchase_order_number || '-'}</td>
                     <td className="px-6 py-4">{new Date(row.created_at).toLocaleDateString('en-IN', { 
