@@ -336,12 +336,30 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
               <BusinessInfoCard business={buyerBusiness} />
             </div>
             <div className="grid grid-cols-2 gap-3 mb-2">
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Invoice ID" value={invoiceId} onChange={e => setInvoiceId(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Purchase Order No." value={purchaseOrderNo} onChange={e => setPurchaseOrderNo(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Invoice Amount" value={invoiceAmount} onChange={e => setInvoiceAmount(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Tax Amount" value={taxAmount} onChange={e => setTaxAmount(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Lorry Receipt" value={lorryReceipt} onChange={e => setLorryReceipt(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Eway Bill" value={ewayBill} onChange={e => setEwayBill(e.target.value)} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Invoice ID*</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter invoice ID" value={invoiceId} onChange={e => setInvoiceId(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Order No.</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter purchase order number" value={purchaseOrderNo} onChange={e => setPurchaseOrderNo(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Amount*</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter invoice amount" value={invoiceAmount} onChange={e => setInvoiceAmount(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tax Amount*</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter tax amount" value={taxAmount} onChange={e => setTaxAmount(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Lorry Receipt</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter lorry receipt number" value={lorryReceipt} onChange={e => setLorryReceipt(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Eway Bill</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter eway bill number" value={ewayBill} onChange={e => setEwayBill(e.target.value)} />
+              </div>
             </div>
             {formError && <div className="text-xs text-error-500 mt-2">{formError}</div>}
             {successMsg && <div className="text-xs text-success-600 mt-2">{successMsg}</div>}
