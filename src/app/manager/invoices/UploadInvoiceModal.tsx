@@ -98,6 +98,17 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
   // Validate individual row
   const validateRow = async (row: CSVRow, rowIndex: number): Promise<ValidationResult> => {
     try {
+      // Get user details first
+      const userDetails = authenticationApi.getUserDetails();
+      if (!userDetails.user_id || !userDetails.lender_id) {
+        return {
+          row: rowIndex + 1,
+          invoice_id: row.invoice_id,
+          status: 'error',
+          message: 'User or lender information missing'
+        };
+      }
+
       // Basic validation
       if (!row.invoice_id.trim()) {
         return {
@@ -257,26 +268,37 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
         }
       }
 
-      // Check for duplicate invoice
-      const invoiceExists = await invoiceApi.checkInvoiceExists(row.invoice_id.trim());
-      if (invoiceExists) {
-          return {
-            row: rowIndex + 1,
-            invoice_id: row.invoice_id,
-            status: 'error',
-            message: 'Invoice ID already exists'
-          };
-      }
+      // Check for duplicate invoice with same lender_id
+      const accessToken = localStorage.getItem('access_token');
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const checkRes = await fetch(`${API_BASE_URL}/invoice/?invoice_id=${encodeURIComponent(row.invoice_id.trim())}`, {
+        method: 'GET',
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
 
-      // Get user details
-      const userDetails = authenticationApi.getUserDetails();
-      if (!userDetails.user_id || !userDetails.lender_id) {
-        return {
-          row: rowIndex + 1,
-          invoice_id: row.invoice_id,
-          status: 'error',
-          message: 'User or lender information missing'
-        };
+      let duplicateStatus = null;
+      if (checkRes.ok) {
+        const data = await checkRes.json();
+        if (Array.isArray(data) && data.length > 0) {
+          // Check if any existing invoice has the same lender_id
+          const existingInvoices = data.filter((inv: any) => inv.lender_id === userDetails.lender_id);
+          if (existingInvoices.length > 0) {
+            return {
+              row: rowIndex + 1,
+              invoice_id: row.invoice_id,
+              status: 'error',
+              message: 'Invoice ID already exists for your lender account'
+            };
+          }
+
+          // Determine status based on existing invoices (different lender)
+          // Convert status to number for comparison
+          const hasFinancedOrRepaid = data.some((inv: any) => Number(inv.status) === 1 || Number(inv.status) === 3);
+          duplicateStatus = hasFinancedOrRepaid ? 6 : 5; // 6 = Already Financed, 5 = Already Checked
+        }
       }
 
       // Create invoice
@@ -295,6 +317,7 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
         tax_amount: Number(row.tax_amount),
         user_id: userDetails.user_id,
         lender_id: userDetails.lender_id,
+        status: duplicateStatus || 0, // Set status based on duplicate check
       };
 
       const createdInvoice = await invoiceApi.createInvoice(invoiceData);

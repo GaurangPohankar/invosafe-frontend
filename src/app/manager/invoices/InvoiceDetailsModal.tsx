@@ -10,6 +10,8 @@ const STATUS_MAP = {
   2: { label: "Rejected", color: "error" },
   3: { label: "Repaid", color: "info" },
   4: { label: "Trash", color: "dark" },
+  5: { label: "Already Checked", color: "warning" },
+  6: { label: "Already Financed", color: "success" },
 } as const;
 
 interface InvoiceDetailsModalProps {
@@ -48,7 +50,7 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
 
   if (!invoice) return null;
   const statusNum = Number(invoice.status);
-  const showFinanceBox = statusNum === 1 && [
+  const showFinanceBox = (statusNum === 1 || statusNum === 6) && [
     invoice.loan_amount,
     invoice.interest_rate,
     invoice.disbursement_amount,
@@ -77,7 +79,7 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
           </div>
         </div>
         {/* Mark as Financed */}
-        {statusNum !== 1 && statusNum !== 3 && (
+        {statusNum !== 1 && statusNum !== 3 && statusNum !== 6 && (
           <div className="px-8 pt-2 pb-4">
             <div className="flex items-center gap-4 bg-success-50 border border-success-200 rounded-lg p-4 mb-4">
               <DollarLineIcon className="w-6 h-6 text-success-600" />
@@ -208,7 +210,7 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
         </div>
         {/* Footer */}
         <div className="px-8 py-4 border-t border-gray-100 flex justify-end flex-shrink-0">
-          {statusNum !== 2 && statusNum !== 3 && (
+          {statusNum !== 2 && statusNum !== 3 && statusNum !== 5 && statusNum !== 6 && (
             <button onClick={onRejectFinance} className="flex items-center gap-2 px-5 py-2 rounded-lg bg-error-50 text-error-600 font-medium text-sm hover:bg-error-100">
               <EyeCloseIcon className="w-5 h-5" /> Reject Finance
             </button>

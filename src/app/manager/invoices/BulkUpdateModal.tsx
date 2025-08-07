@@ -38,6 +38,8 @@ const STATUS_MAP = {
   1: { label: "Financed", color: "success" },
   2: { label: "Rejected", color: "error" },
   3: { label: "Repaid", color: "info" },
+  5: { label: "Already Checked", color: "warning" },
+  6: { label: "Already Financed", color: "success" },
 } as const;
 
 export default function BulkUpdateModal({ 

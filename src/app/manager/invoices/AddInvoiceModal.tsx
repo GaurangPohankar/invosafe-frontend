@@ -3,6 +3,7 @@ import { Modal } from "@/components/ui/modal";
 import { businessApi } from "@/library/businessApi";
 import { invoiceApi } from "@/library/invoiceApi";
 import { authenticationApi } from "@/library/authenticationApi";
+import { Console } from "console";
 
 function isGSTIN(value: string) {
   return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(value.trim());
@@ -192,7 +193,15 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
     }
     setFormLoading(true);
     try {
-      // Check for duplicate invoice
+      // Get user_id and lender_id
+      const userDetails = authenticationApi.getUserDetails();
+      if (!userDetails.user_id || !userDetails.lender_id) {
+        setFormError("User or lender information missing. Please re-login.");
+        setFormLoading(false);
+        return;
+      }
+
+      // Check for duplicate invoice with same lender_id
       const accessToken = localStorage.getItem('access_token');
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
       const checkRes = await fetch(`${API_BASE_URL}/invoice/?invoice_id=${encodeURIComponent(invoiceId)}`, {
@@ -202,22 +211,41 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
           'Authorization': `Bearer ${accessToken}`,
         },
       });
+
+      let duplicateStatus = null;
       if (checkRes.ok) {
         const data = await checkRes.json();
+        console.log('Raw API response data:', data);
         if (Array.isArray(data) && data.length > 0) {
-          setFormError("Invoice with this ID already exists.");
-          setFormLoading(false);
-          return;
+          // Check if any existing invoice has the same lender_id
+          const existingInvoices = data.filter((inv: any) => inv.lender_id === userDetails.lender_id);
+          if (existingInvoices.length > 0) {
+            setFormError("Invoice with this ID already exists for your lender account.");
+            setFormLoading(false);
+            return;
+          }
+
+          // Debug: Log each invoice's status
+          data.forEach((inv: any, index: number) => {
+            console.log(`Invoice ${index}:`, {
+              id: inv.id,
+              status: inv.status,
+              statusType: typeof inv.status,
+              statusAsNumber: Number(inv.status),
+              lender_id: inv.lender_id
+            });
+          });
+
+          // Determine status based on existing invoices (different lender)
+          // Convert status to number for comparison
+          const hasFinancedOrRepaid = data.some((inv: any) => Number(inv.status) === 1 || Number(inv.status) === 3);
+          console.log('hasFinancedOrRepaid:', hasFinancedOrRepaid);
+          duplicateStatus = hasFinancedOrRepaid ? 6 : 5; // 6 = Already Financed, 5 = Already Checked
+          console.log('duplicateStatus:', duplicateStatus);
         }
       }
-      // Get user_id and lender_id
-      const userDetails = authenticationApi.getUserDetails();
-      if (!userDetails.user_id || !userDetails.lender_id) {
-        setFormError("User or lender information missing. Please re-login.");
-        setFormLoading(false);
-        return;
-      }
-      // Create invoice
+      
+      // Create invoice with appropriate status
       await invoiceApi.createInvoice({
         invoice_id: invoiceId.trim(),
         seller_id: sellerBusiness.id,
@@ -233,18 +261,24 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
         tax_amount: Number(taxAmount),
         user_id: userDetails.user_id,
         lender_id: userDetails.lender_id,
+        status: duplicateStatus || 0, // Set status based on duplicate check
         // Add more fields as needed
       });
-      setSuccessMsg("Invoice created successfully!");
+
+      const statusMessage = duplicateStatus === 6 ? "Invoice created with 'Already Financed' status" : 
+                           duplicateStatus === 5 ? "Invoice created with 'Already Checked' status" : 
+                           "Invoice created successfully!";
+      setSuccessMsg(statusMessage);
       setFormLoading(false);
+      
       // Reset form and close modal
-      setTimeout(() => {
-        setSellerInput(""); setSellerBusiness(null); setSellerGSTList([]); setSellerSelectedGST("");
-        setBuyerInput(""); setBuyerBusiness(null); setBuyerGSTList([]); setBuyerSelectedGST("");
-        setInvoiceId(""); setPurchaseOrderNo(""); setEInvoice(""); setInvoiceAmount(""); setTaxAmount(""); setLorryReceipt(""); setEwayBill("");
-        setFormError(null); setSuccessMsg(null);
-        onClose();
-      }, 500);
+      // setTimeout(() => {
+      //   setSellerInput(""); setSellerBusiness(null); setSellerGSTList([]); setSellerSelectedGST("");
+      //   setBuyerInput(""); setBuyerBusiness(null); setBuyerGSTList([]); setBuyerSelectedGST("");
+      //   setInvoiceId(""); setPurchaseOrderNo(""); setEInvoice(""); setInvoiceAmount(""); setTaxAmount(""); setLorryReceipt(""); setEwayBill("");
+      //   setFormError(null); setSuccessMsg(null);
+      //   onClose();
+      // }, 500);
     } catch (err: any) {
       setFormError(err.message || "Failed to create invoice");
       setFormLoading(false);
