@@ -17,7 +17,7 @@ export default function DeleteInvoiceModal({ open, onClose, invoice, onDelete }:
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await invoiceApi.updateInvoice(invoice.id, {
+      await invoiceApi.updateInvoiceById(invoice.id, {
         ...invoice,
         status: 4,
       });

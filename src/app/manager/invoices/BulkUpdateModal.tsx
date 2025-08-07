@@ -332,7 +332,7 @@ export default function BulkUpdateModal({
       updateData.invoice_id = row.invoice_id;
 
       try {
-        await invoiceApi.updateInvoice(invoice.invoice_id, updateData);
+        await invoiceApi.updateInvoiceByInvoiceId(invoice.invoice_id, updateData);
         
         results.push({
           invoice_id: row.invoice_id,

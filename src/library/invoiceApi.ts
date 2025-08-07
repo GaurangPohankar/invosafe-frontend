@@ -114,7 +114,49 @@ export const invoiceApi = {
     return data;
   },
 
-  async updateInvoice(invoiceId: string, invoiceData: Partial<Invoice>): Promise<Invoice> {
+
+
+  async updateInvoiceById(invoiceId: number, invoiceData: Partial<Invoice>): Promise<Invoice> {
+    const accessToken = localStorage.getItem('access_token');
+    
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/invoice/${invoiceId}`, {
+      method: 'PUT',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(invoiceData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      
+      // Handle structured error responses
+      if (errorData.detail && Array.isArray(errorData.detail)) {
+        const errorMessages = errorData.detail.map((err: any) => {
+          if (err.msg) {
+            return `${err.loc?.join('.') || 'Field'}: ${err.msg}`;
+          }
+          return err;
+        }).join(', ');
+        throw new Error(errorMessages);
+      } else if (errorData.detail) {
+        throw new Error(errorData.detail);
+      } else {
+        throw new Error('Failed to update invoice');
+      }
+    }
+
+    const data: Invoice = await response.json();
+    return data;
+  },
+
+  async updateInvoiceByInvoiceId(invoiceId: string, invoiceData: Partial<Invoice>): Promise<Invoice> {
     const accessToken = localStorage.getItem('access_token');
     
     if (!accessToken) {

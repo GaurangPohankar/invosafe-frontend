@@ -20,7 +20,7 @@ export default function MarkAsRepaidModal({ open, onClose, onSubmit, invoice }: 
     e.preventDefault();
     setLoading(true);
     try {
-      await invoiceApi.updateInvoice(invoice.id, {
+      await invoiceApi.updateInvoiceById(invoice.id, {
         ...invoice,
         status: 3,
         repaid_date: repaidDate || undefined,
