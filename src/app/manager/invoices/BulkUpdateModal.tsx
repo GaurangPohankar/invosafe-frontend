@@ -38,6 +38,8 @@ const STATUS_MAP = {
   1: { label: "Financed", color: "success" },
   2: { label: "Rejected", color: "error" },
   3: { label: "Repaid", color: "info" },
+  5: { label: "Already Checked", color: "warning" },
+  6: { label: "Already Financed", color: "success" },
 } as const;
 
 export default function BulkUpdateModal({ 
@@ -330,7 +332,7 @@ export default function BulkUpdateModal({
       updateData.invoice_id = row.invoice_id;
 
       try {
-        await invoiceApi.updateInvoice(invoice.invoice_id, updateData);
+        await invoiceApi.updateInvoiceByInvoiceId(invoice.invoice_id, updateData);
         
         results.push({
           invoice_id: row.invoice_id,

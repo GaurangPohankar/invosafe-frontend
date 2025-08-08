@@ -14,6 +14,7 @@ interface RejectFinanceModalProps {
 export default function RejectFinanceModal({ open, onClose, invoice, onSubmit }: RejectFinanceModalProps) {
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const isValid = !!reason.trim();
 
   if (!invoice) return null;
@@ -22,16 +23,17 @@ export default function RejectFinanceModal({ open, onClose, invoice, onSubmit }:
     e.preventDefault();
     if (!isValid) return;
     setLoading(true);
+    setError(null);
     try {
-      await invoiceApi.updateInvoice(invoice.id, {
+      await invoiceApi.updateInvoiceById(invoice.id, {
         ...invoice,
         status: 2,
         rejection_reason: reason,
       });
       if (onSubmit) onSubmit(reason);
       onClose();
-    } catch (err) {
-      alert("Failed to reject invoice");
+    } catch (err: any) {
+      setError(err.message || "Failed to reject invoice");
     } finally {
       setLoading(false);
     }
@@ -42,7 +44,7 @@ export default function RejectFinanceModal({ open, onClose, invoice, onSubmit }:
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl">
         <div className="px-8 pt-8 pb-4 bg-blue-50 rounded-t-2xl">
           <div className="flex items-center gap-3 mb-2">
-            <h2 className="text-2xl font-bold text-gray-900">Unique ID - {invoice.id}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Unique ID - {invoice.invoice_id}</h2>
             <Badge variant="light" color="warning" size="md">Checked</Badge>
           </div>
           <div className="text-gray-500 text-base mb-1">Are you sure you want to reject finance this invoice?</div>
@@ -55,12 +57,21 @@ export default function RejectFinanceModal({ open, onClose, invoice, onSubmit }:
             value={reason}
             onChange={e => setReason(e.target.value)}
           />
+          {error && (
+            <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+              {error}
+            </div>
+          )}
         </div>
         <div className="px-8 pb-8 flex justify-center">
           <button
             type="submit"
             disabled={!isValid || loading}
-            className="w-full py-3 rounded-lg bg-gray-200 text-gray-500 font-semibold text-base disabled:opacity-60 disabled:cursor-not-allowed bg-brand-500 text-white hover:bg-brand-600 transition disabled:bg-gray-200 disabled:text-gray-500"
+            className={`w-full py-3 rounded-lg font-semibold text-base transition ${
+              !isValid || loading
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-brand-500 text-white hover:bg-brand-600'
+            }`}
           >
             {loading ? "Rejecting..." : "Confirm"}
           </button>

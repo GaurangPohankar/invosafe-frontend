@@ -62,7 +62,7 @@ export default function MarkAsFinancedModal({ open, onClose, onSubmit, invoice }
     if (Object.keys(validationErrors).length > 0) return;
     setLoading(true);
     try {
-      await invoiceApi.updateInvoice(invoice.id, {
+      await invoiceApi.updateInvoiceById(invoice.id, {
         ...invoice,
         loan_amount: form.loanAmount,
         interest_rate: form.rateOfInterest,

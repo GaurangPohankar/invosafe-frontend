@@ -3,6 +3,7 @@ import { Modal } from "@/components/ui/modal";
 import { businessApi } from "@/library/businessApi";
 import { invoiceApi } from "@/library/invoiceApi";
 import { authenticationApi } from "@/library/authenticationApi";
+import { Console } from "console";
 
 function isGSTIN(value: string) {
   return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(value.trim());
@@ -75,7 +76,7 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
         const { business, gst_list } = await businessApi.getGstListByPan(sellerInput.trim());
         setSellerBusiness(business);
         setSellerGSTList(gst_list);
-        setSellerSelectedGST(""); // Require user to select GST
+        setSellerSelectedGST(""); // Require user to select GST if available
       } catch (err: any) {
         setSellerError(err.message || "Failed to fetch GST list");
       } finally {
@@ -124,7 +125,7 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
         const { business, gst_list } = await businessApi.getGstListByPan(buyerInput.trim());
         setBuyerBusiness(business);
         setBuyerGSTList(gst_list);
-        setBuyerSelectedGST(""); // Require user to select GST
+        setBuyerSelectedGST(""); // Require user to select GST if available
       } catch (err: any) {
         setBuyerError(err.message || "Failed to fetch GST list");
       } finally {
@@ -166,8 +167,8 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
 
   // Validation
   function validateForm() {
-    if (!sellerBusiness || !sellerSelectedGST) return "Select a valid seller and GST";
-    if (!buyerBusiness || !buyerSelectedGST) return "Select a valid buyer and GST";
+    if (!sellerBusiness) return "Select a valid seller";
+    if (!buyerBusiness) return "Select a valid buyer";
     if (!invoiceId.trim()) return "Invoice ID is required";
     if (!invoiceAmount || isNaN(Number(invoiceAmount)) || Number(invoiceAmount) <= 0) return "Enter a valid invoice amount";
     if (!taxAmount || isNaN(Number(taxAmount)) || Number(taxAmount) < 0) return "Enter a valid tax amount";
@@ -175,8 +176,8 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
   }
 
   const isFormValid =
-    !!sellerBusiness && !!sellerSelectedGST &&
-    !!buyerBusiness && !!buyerSelectedGST &&
+    !!sellerBusiness &&
+    !!buyerBusiness &&
     !!invoiceId.trim() &&
     !!invoiceAmount && !isNaN(Number(invoiceAmount)) && Number(invoiceAmount) > 0 &&
     !!taxAmount && !isNaN(Number(taxAmount)) && Number(taxAmount) >= 0;
@@ -192,7 +193,15 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
     }
     setFormLoading(true);
     try {
-      // Check for duplicate invoice
+      // Get user_id and lender_id
+      const userDetails = authenticationApi.getUserDetails();
+      if (!userDetails.user_id || !userDetails.lender_id) {
+        setFormError("User or lender information missing. Please re-login.");
+        setFormLoading(false);
+        return;
+      }
+
+      // Check for duplicate invoice with same lender_id
       const accessToken = localStorage.getItem('access_token');
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
       const checkRes = await fetch(`${API_BASE_URL}/invoice/?invoice_id=${encodeURIComponent(invoiceId)}`, {
@@ -202,28 +211,49 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
           'Authorization': `Bearer ${accessToken}`,
         },
       });
+
+      let duplicateStatus = null;
       if (checkRes.ok) {
         const data = await checkRes.json();
+        console.log('Raw API response data:', data);
         if (Array.isArray(data) && data.length > 0) {
-          setFormError("Invoice with this ID already exists.");
-          setFormLoading(false);
-          return;
+          // Check if any existing invoice has the same lender_id
+          const existingInvoices = data.filter((inv: any) => inv.lender_id === userDetails.lender_id);
+          if (existingInvoices.length > 0) {
+            setFormError("Invoice with this ID already exists for your lender account.");
+            setFormLoading(false);
+            return;
+          }
+
+          // Debug: Log each invoice's status
+          data.forEach((inv: any, index: number) => {
+            console.log(`Invoice ${index}:`, {
+              id: inv.id,
+              status: inv.status,
+              statusType: typeof inv.status,
+              statusAsNumber: Number(inv.status),
+              lender_id: inv.lender_id
+            });
+          });
+
+          // Determine status based on existing invoices (different lender)
+          // Convert status to number for comparison
+          const hasFinancedOrRepaid = data.some((inv: any) => Number(inv.status) === 1 || Number(inv.status) === 3);
+          console.log('hasFinancedOrRepaid:', hasFinancedOrRepaid);
+          duplicateStatus = hasFinancedOrRepaid ? 6 : 5; // 6 = Already Financed, 5 = Already Checked
+          console.log('duplicateStatus:', duplicateStatus);
         }
       }
-      // Get user_id and lender_id
-      const userDetails = authenticationApi.getUserDetails();
-      if (!userDetails.user_id || !userDetails.lender_id) {
-        setFormError("User or lender information missing. Please re-login.");
-        setFormLoading(false);
-        return;
-      }
-      // Create invoice
+      
+      // Create invoice with appropriate status
       await invoiceApi.createInvoice({
         invoice_id: invoiceId.trim(),
         seller_id: sellerBusiness.id,
-        seller_gst: sellerSelectedGST,
+        seller_pan: sellerBusiness.pan || '0',
+        seller_gst: sellerSelectedGST || '',
         buyer_id: buyerBusiness.id,
-        buyer_gst: buyerSelectedGST,
+        buyer_pan: buyerBusiness.pan || '0',
+        buyer_gst: buyerSelectedGST || '',
         purchase_order_number: purchaseOrderNo,
         lorry_receipt: lorryReceipt,
         eway_bill: ewayBill,
@@ -231,18 +261,24 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
         tax_amount: Number(taxAmount),
         user_id: userDetails.user_id,
         lender_id: userDetails.lender_id,
+        status: duplicateStatus || 0, // Set status based on duplicate check
         // Add more fields as needed
       });
-      setSuccessMsg("Invoice created successfully!");
+
+      const statusMessage = duplicateStatus === 6 ? "Invoice created with 'Already Financed' status" : 
+                           duplicateStatus === 5 ? "Invoice created with 'Already Checked' status" : 
+                           "Invoice created successfully!";
+      setSuccessMsg(statusMessage);
       setFormLoading(false);
+      
       // Reset form and close modal
-      setTimeout(() => {
-        setSellerInput(""); setSellerBusiness(null); setSellerGSTList([]); setSellerSelectedGST("");
-        setBuyerInput(""); setBuyerBusiness(null); setBuyerGSTList([]); setBuyerSelectedGST("");
-        setInvoiceId(""); setPurchaseOrderNo(""); setEInvoice(""); setInvoiceAmount(""); setTaxAmount(""); setLorryReceipt(""); setEwayBill("");
-        setFormError(null); setSuccessMsg(null);
-        onClose();
-      }, 500);
+      // setTimeout(() => {
+      //   setSellerInput(""); setSellerBusiness(null); setSellerGSTList([]); setSellerSelectedGST("");
+      //   setBuyerInput(""); setBuyerBusiness(null); setBuyerGSTList([]); setBuyerSelectedGST("");
+      //   setInvoiceId(""); setPurchaseOrderNo(""); setEInvoice(""); setInvoiceAmount(""); setTaxAmount(""); setLorryReceipt(""); setEwayBill("");
+      //   setFormError(null); setSuccessMsg(null);
+      //   onClose();
+      // }, 500);
     } catch (err: any) {
       setFormError(err.message || "Failed to create invoice");
       setFormLoading(false);
@@ -265,7 +301,7 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
               <div className="font-medium text-sm mb-1">Seller's Details</div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm"
+                  className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm bg-white"
                   placeholder="Search by PAN/GSTIN"
                   value={sellerInput}
                   onChange={handleSellerInputChange}
@@ -283,17 +319,22 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
               {sellerError && <div className="text-xs text-error-500 mt-1">{sellerError}</div>}
               {sellerGSTList.length > 0 && (
                 <div className="mt-2">
-                  <label className="block text-xs font-medium mb-1">Select GST</label>
+                  <label className="block text-xs font-medium mb-1">Select GST (Optional)</label>
                   <select
-                    className="border border-gray-200 rounded px-3 py-2 text-sm w-full"
+                    className="border border-gray-200 rounded px-3 py-2 text-sm w-full bg-white"
                     value={sellerSelectedGST}
                     onChange={e => handleSellerGSTSelect(e.target.value)}
                   >
-                    <option value="">Select GST</option>
+                    <option value="">No GST (Continue without GST)</option>
                     {sellerGSTList.map(gst => (
                       <option key={gst} value={gst}>{gst}</option>
                     ))}
                   </select>
+                </div>
+              )}
+              {sellerBusiness && sellerGSTList.length === 0 && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                  No GST found for this PAN. You can continue without GST.
                 </div>
               )}
               <BusinessInfoCard business={sellerBusiness} />
@@ -302,7 +343,7 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
               <div className="font-medium text-sm mb-1">Buyer's Details</div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm"
+                  className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm bg-white"
                   placeholder="Search by PAN/GSTIN"
                   value={buyerInput}
                   onChange={handleBuyerInputChange}
@@ -320,28 +361,51 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
               {buyerError && <div className="text-xs text-error-500 mt-1">{buyerError}</div>}
               {buyerGSTList.length > 0 && (
                 <div className="mt-2">
-                  <label className="block text-xs font-medium mb-1">Select GST</label>
+                  <label className="block text-xs font-medium mb-1">Select GST (Optional)</label>
                   <select
-                    className="border border-gray-200 rounded px-3 py-2 text-sm w-full"
+                    className="border border-gray-200 rounded px-3 py-2 text-sm w-full bg-white"
                     value={buyerSelectedGST}
                     onChange={e => handleBuyerGSTSelect(e.target.value)}
                   >
-                    <option value="">Select GST</option>
+                    <option value="">No GST (Continue without GST)</option>
                     {buyerGSTList.map(gst => (
                       <option key={gst} value={gst}>{gst}</option>
                     ))}
                   </select>
                 </div>
               )}
+              {buyerBusiness && buyerGSTList.length === 0 && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                  No GST found for this PAN. You can continue without GST.
+                </div>
+              )}
               <BusinessInfoCard business={buyerBusiness} />
             </div>
             <div className="grid grid-cols-2 gap-3 mb-2">
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Invoice ID" value={invoiceId} onChange={e => setInvoiceId(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Purchase Order No." value={purchaseOrderNo} onChange={e => setPurchaseOrderNo(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Invoice Amount" value={invoiceAmount} onChange={e => setInvoiceAmount(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Tax Amount" value={taxAmount} onChange={e => setTaxAmount(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Lorry Receipt" value={lorryReceipt} onChange={e => setLorryReceipt(e.target.value)} />
-              <input className="border border-gray-200 rounded px-3 py-2 text-sm" placeholder="Eway Bill" value={ewayBill} onChange={e => setEwayBill(e.target.value)} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Invoice ID*</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter invoice ID" value={invoiceId} onChange={e => setInvoiceId(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Order No.</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter purchase order number" value={purchaseOrderNo} onChange={e => setPurchaseOrderNo(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Amount*</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter invoice amount" value={invoiceAmount} onChange={e => setInvoiceAmount(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tax Amount*</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter tax amount" value={taxAmount} onChange={e => setTaxAmount(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Lorry Receipt</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter lorry receipt number" value={lorryReceipt} onChange={e => setLorryReceipt(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Eway Bill</label>
+                <input className="border border-gray-200 rounded px-3 py-2 text-sm w-full" placeholder="Enter eway bill number" value={ewayBill} onChange={e => setEwayBill(e.target.value)} />
+              </div>
             </div>
             {formError && <div className="text-xs text-error-500 mt-2">{formError}</div>}
             {successMsg && <div className="text-xs text-success-600 mt-2">{successMsg}</div>}
