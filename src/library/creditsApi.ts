@@ -41,6 +41,13 @@ interface CreateTransactionRequest {
   status?: string;
 }
 
+interface MonthlyChartResponse {
+  data: number[];
+  year: number;
+  lender_id: number;
+  total_annual_credits: number;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const creditsApi = {
@@ -222,6 +229,32 @@ export const creditsApi = {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Failed to create transaction');
     }
+    return await response.json();
+  },
+
+  async getMonthlyChartData(year: number): Promise<MonthlyChartResponse> {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      throw new Error('No access token found');
+    }
+    
+    const lenderId = localStorage.getItem('lender_id');
+    if (!lenderId) {
+      throw new Error('No lender ID found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/transactions/monthly/chart?lender_id=${lenderId}&year=${year}`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to fetch monthly chart data');
+    }
+    
     return await response.json();
   },
 }; 
