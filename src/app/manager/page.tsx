@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import React from "react";
-import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
-import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
-import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "@/components/ecommerce/StatisticsChart";
-import RecentOrders from "@/components/ecommerce/RecentOrders";
-import DemographicCard from "@/components/ecommerce/DemographicCard";
+import { EcommerceMetrics } from "@/components/ecommerce/manager/EcommerceMetrics";
+import MonthlyTarget from "@/components/ecommerce/manager/MonthlyTarget";
+import MonthlySalesChart from "@/components/ecommerce/manager/MonthlySalesChart";
+import StatisticsChart from "@/components/ecommerce/manager/StatisticsChart";
 
 export const metadata: Metadata = {
   title: "Manager Dashboard | InvoSafe - Invoice Management System",
@@ -29,13 +27,6 @@ export default function ManagerDashboard() {
         <StatisticsChart />
       </div>
 
-      <div className="col-span-12 xl:col-span-5">
-        <DemographicCard />
-      </div>
-
-      <div className="col-span-12 xl:col-span-7">
-        <RecentOrders />
-      </div>
     </div>
   );
 } 
