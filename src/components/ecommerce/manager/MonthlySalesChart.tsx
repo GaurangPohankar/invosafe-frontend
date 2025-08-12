@@ -241,14 +241,7 @@ export default function MonthlySalesChart() {
         </div>
       </div>
       
-      {monthlyData && (
-        <div className="mt-4 px-2 pb-4">
-          <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-            <span>Total Annual Credits: {monthlyData.total_annual_credits}</span>
-            <span>Total Used: {monthlyData.data.reduce((sum, monthCredits) => sum + monthCredits, 0)}</span>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
