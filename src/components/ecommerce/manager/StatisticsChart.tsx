@@ -191,7 +191,7 @@ export default function StatisticsChart() {
               ))}
             </select>
           </div>
-          <ChartTab />
+          
         </div>
       </div>
 
