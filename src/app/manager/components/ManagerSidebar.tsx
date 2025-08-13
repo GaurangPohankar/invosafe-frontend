@@ -311,8 +311,11 @@ const ManagerSidebar: React.FC = () => {
         </nav>
       </div>
       
-      {/* ManagerSidebarWidget at the bottom */}
-      {isExpanded || isHovered || isMobileOpen ? <ManagerSidebarWidget /> : null}
+      {/* ManagerSidebarWidget at the bottom - only for MANAGER role */}
+      {isExpanded || isHovered || isMobileOpen ? 
+        (userRole === "MANAGER" ? <ManagerSidebarWidget /> : null) 
+        : null
+      }
     </aside>
   );
 };
