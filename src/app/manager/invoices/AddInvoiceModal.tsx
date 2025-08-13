@@ -272,13 +272,13 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
       setFormLoading(false);
       
       // Reset form and close modal
-      // setTimeout(() => {
-      //   setSellerInput(""); setSellerBusiness(null); setSellerGSTList([]); setSellerSelectedGST("");
-      //   setBuyerInput(""); setBuyerBusiness(null); setBuyerGSTList([]); setBuyerSelectedGST("");
-      //   setInvoiceId(""); setPurchaseOrderNo(""); setEInvoice(""); setInvoiceAmount(""); setTaxAmount(""); setLorryReceipt(""); setEwayBill("");
-      //   setFormError(null); setSuccessMsg(null);
-      //   onClose();
-      // }, 500);
+      setTimeout(() => {
+        setSellerInput(""); setSellerBusiness(null); setSellerGSTList([]); setSellerSelectedGST("");
+        setBuyerInput(""); setBuyerBusiness(null); setBuyerGSTList([]); setBuyerSelectedGST("");
+        setInvoiceId(""); setPurchaseOrderNo(""); setEInvoice(""); setInvoiceAmount(""); setTaxAmount(""); setLorryReceipt(""); setEwayBill("");
+        setFormError(null); setSuccessMsg(null);
+        onClose();
+      }, 500);
     } catch (err: any) {
       setFormError(err.message || "Failed to create invoice");
       setFormLoading(false);

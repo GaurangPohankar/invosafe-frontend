@@ -288,7 +288,7 @@ const ManagerSidebar: React.FC = () => {
           )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar flex-1">
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
             <div>
@@ -309,8 +309,13 @@ const ManagerSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <ManagerSidebarWidget /> : null}
       </div>
+      
+      {/* ManagerSidebarWidget at the bottom - only for MANAGER role */}
+      {isExpanded || isHovered || isMobileOpen ? 
+        (userRole === "MANAGER" ? <ManagerSidebarWidget /> : null) 
+        : null
+      }
     </aside>
   );
 };
