@@ -78,8 +78,8 @@ export default function InvoiceDetailsModal({ open, onClose, invoice, onMarkAsFi
             </Badge>
           </div>
         </div>
-        {/* Mark as Financed */}
-        {statusNum !== 1 && statusNum !== 3 && statusNum !== 6 && (
+        {/* Mark as Financed: do not show for terminal states (Rejected=2, Repaid=3) or already financed (1,6) */}
+        {statusNum !== 1 && statusNum !== 2 && statusNum !== 3 && statusNum !== 6 && (
           <div className="px-8 pt-2 pb-4">
             <div className="flex items-center gap-4 bg-success-50 border border-success-200 rounded-lg p-4 mb-4">
               <DollarLineIcon className="w-6 h-6 text-success-600" />

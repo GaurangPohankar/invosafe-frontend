@@ -29,7 +29,7 @@ interface Invoice {
   buyer_id: number;
   buyer_pan: string;
   buyer_gst: string;
-  status: number;
+  status: string;
   created_at: string;
   updated_at: string;
   invoice_amount?: number;
@@ -206,7 +206,7 @@ export default function InvoiceTable() {
         invoice.seller_gst,
         invoice.buyer_pan || '',
         invoice.buyer_gst,
-        STATUS_MAP[invoice.status as keyof typeof STATUS_MAP]?.label || invoice.status,
+        STATUS_MAP[Number(invoice.status) as keyof typeof STATUS_MAP]?.label || invoice.status,
         invoice.loan_amount || '',
         invoice.interest_rate || '',
         invoice.disbursement_amount || '',
@@ -397,10 +397,10 @@ export default function InvoiceTable() {
                     <td className="px-6 py-4">
                       <Badge 
                         variant="light" 
-                        color={STATUS_MAP[row.status as keyof typeof STATUS_MAP]?.color || 'warning'} 
+                        color={STATUS_MAP[Number(row.status) as keyof typeof STATUS_MAP]?.color || 'warning'} 
                         size="sm"
                       >
-                        {STATUS_MAP[row.status as keyof typeof STATUS_MAP]?.label || row.status}
+                        {STATUS_MAP[Number(row.status) as keyof typeof STATUS_MAP]?.label || row.status}
                       </Badge>
                     </td>
                     
@@ -419,20 +419,20 @@ export default function InvoiceTable() {
                         <DropdownItem onItemClick={() => handleView(row)} className="flex items-center gap-2 text-gray-700 hover:text-brand-600">
                           <EyeIcon className="w-5 h-5" /> View
                         </DropdownItem>
-                        {/* Mark as Financed: hide if status is 1, 6 */}
-                        {Number(row.status) !== 1 && Number(row.status) !== 6 && (
+                        {/* Mark as Financed: allow only when NOT terminal (hide for 1,2,3,6) */}
+                        {Number(row.status) !== 1 && Number(row.status) !== 2 && Number(row.status) !== 3 && Number(row.status) !== 6 && (
                           <DropdownItem onItemClick={() => handleMarkAsFinanced(row)} className="flex items-center gap-2 text-gray-700 hover:text-success-600">
                             <DollarLineIcon className="w-5 h-5" /> Mark as Financed
                           </DropdownItem>
                         )}
-                        {/* Reject Finance: hide if status is 2, 5, 6 */}
-                        {Number(row.status) !== 2 && Number(row.status) !== 5 && Number(row.status) !== 6 && (
+                        {/* Reject Finance: hide if status is 2, 3, 5, 6 */}
+                        {Number(row.status) !== 2 && Number(row.status) !== 3 && Number(row.status) !== 5 && Number(row.status) !== 6 && (
                           <DropdownItem onItemClick={() => handleRejectFinance(row)} className="flex items-center gap-2 text-gray-700 hover:text-error-600">
                             <EyeCloseIcon className="w-5 h-5" /> Reject Finance
                           </DropdownItem>
                         )}
-                        {/* Mark as Repaid: hide if status is 3, 5, 6 */}
-                        {Number(row.status) !== 3 && Number(row.status) !== 5 && Number(row.status) !== 6 && (
+                        {/* Mark as Repaid: show ONLY when financed (1 or 6) */}
+                        {(Number(row.status) === 1 || Number(row.status) === 6) && (
                           <DropdownItem onItemClick={() => handleMarkAsRepaid(row)} className="flex items-center gap-2 text-gray-700 hover:text-info-600">
                             <DollarLineIcon className="w-5 h-5" /> Mark as Repaid
                           </DropdownItem>
