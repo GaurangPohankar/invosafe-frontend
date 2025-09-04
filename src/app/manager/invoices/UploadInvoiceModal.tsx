@@ -317,7 +317,7 @@ export default function UploadInvoiceModal({ open, onClose }: { open: boolean; o
         tax_amount: Number(row.tax_amount),
         user_id: userDetails.user_id,
         lender_id: userDetails.lender_id,
-        status: duplicateStatus || 0, // Set status based on duplicate check
+        status: String(duplicateStatus ?? 0), // Set status as string based on duplicate check
       };
 
       const createdInvoice = await invoiceApi.createInvoice(invoiceData);

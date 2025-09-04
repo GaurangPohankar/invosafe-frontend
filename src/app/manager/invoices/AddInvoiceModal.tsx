@@ -261,7 +261,7 @@ export default function AddInvoiceModal({ open, onClose }: { open: boolean; onCl
         tax_amount: Number(taxAmount),
         user_id: userDetails.user_id,
         lender_id: userDetails.lender_id,
-        status: duplicateStatus || 0, // Set status based on duplicate check
+        status: String(duplicateStatus ?? 0), // Set status as string based on duplicate check
         // Add more fields as needed
       });
 
