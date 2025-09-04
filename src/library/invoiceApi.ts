@@ -13,7 +13,7 @@ interface Invoice {
   buyer_id: number;
   buyer_pan: string;
   buyer_gst: string;
-  status: number;
+  status: string;
   created_at: string;
   updated_at: string;
   loan_amount?: string;
@@ -95,6 +95,11 @@ export const invoiceApi = {
       throw new Error('No access token found');
     }
 
+    const payload: any = { ...invoiceData };
+    if (payload.status !== undefined && payload.status !== null) {
+      payload.status = String(payload.status);
+    }
+
     const response = await fetch(`${API_BASE_URL}/invoice`, {
       method: 'POST',
       headers: {
@@ -102,7 +107,7 @@ export const invoiceApi = {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(invoiceData),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -123,6 +128,11 @@ export const invoiceApi = {
       throw new Error('No access token found');
     }
 
+    const payload: any = { ...invoiceData };
+    if (payload.status !== undefined && payload.status !== null) {
+      payload.status = String(payload.status);
+    }
+
     const response = await fetch(`${API_BASE_URL}/invoice/${invoiceId}`, {
       method: 'PUT',
       headers: {
@@ -130,7 +140,7 @@ export const invoiceApi = {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(invoiceData),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -163,6 +173,11 @@ export const invoiceApi = {
       throw new Error('No access token found');
     }
 
+    const payload: any = { ...invoiceData };
+    if (payload.status !== undefined && payload.status !== null) {
+      payload.status = String(payload.status);
+    }
+
     const response = await fetch(`${API_BASE_URL}/invoice/invoice-id/${invoiceId}`, {
       method: 'PUT',
       headers: {
@@ -170,7 +185,7 @@ export const invoiceApi = {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(invoiceData),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
