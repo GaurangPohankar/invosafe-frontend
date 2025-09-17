@@ -44,6 +44,12 @@ To get started with InvoSafe, ensure you have the following prerequisites instal
 - `npm run start` - Start the production server
 - `npm run lint` - Run ESLint to check code quality
 
+
+### Server Changes
+- `git pull origin main` - Start the development server
+- `pm2 restart invosafe-frontend` - Build the application for production
+
+
 ## Project Structure
 
 ```

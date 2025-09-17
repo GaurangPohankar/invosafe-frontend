@@ -4,14 +4,40 @@ import { useSidebar } from "@/context/SidebarContext";
 import ManagerHeader from "./components/ManagerHeader";
 import ManagerSidebar from "./components/ManagerSidebar";
 import ManagerBackdrop from "./components/ManagerBackdrop";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { authenticationApi } from "@/library/authenticationApi";
 
 export default function ManagerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+
+  // Redirect to signin if user is not authenticated
+  useEffect(() => {
+    if (!authenticationApi.isAuthenticated()) {
+      router.replace("/auth/signin");
+    }
+  }, [router]);
+
+  // Prevent initial content flash before auth check
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  useEffect(() => {
+    const authed = authenticationApi.isAuthenticated();
+    setIsAuthorized(authed);
+    if (!authed) {
+      // Navigation already triggered above; keep page blank
+      setIsAuthorized(false);
+    }
+  }, []);
+
+  // Block rendering until authorized to avoid content flash
+  if (isAuthorized !== true) {
+    return null;
+  }
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen
