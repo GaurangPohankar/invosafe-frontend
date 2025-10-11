@@ -43,18 +43,6 @@ const adminNavItems: NavItem[] = [
     path: "/admin/lenders",
     roles: ["ADMIN"], // Only admins can access lenders
   },
-  {
-    icon: <PlugInIcon />,
-    name: "My API",
-    path: "/admin/my-api",
-    roles: ["ADMIN"], // Only admins can access API
-  },
-  {
-    icon: <DollarLineIcon />,
-    name: "Credits",
-    path: "/admin/credits",
-    roles: ["ADMIN"], // Only admins can access credits
-  },
 ];
 
 const AdminSidebar: React.FC = () => {
