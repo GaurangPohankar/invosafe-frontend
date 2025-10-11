@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { ApexOptions } from "apexcharts";
-import ChartTab from "../../common/ChartTab";
+import ChartTab from "@/components/common/ChartTab";
 import dynamic from "next/dynamic";
 import { invoiceApi } from "@/library/invoiceApi";
+import { authenticationApi } from "@/library/authenticationApi";
 
 // Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
@@ -30,7 +31,18 @@ export default function StatisticsChart() {
         setLoading(true);
         setError(null);
         
-        const data = await invoiceApi.getInvoiceStatistics(selectedYear);
+        // Get lender_id from user details
+        const userDetails = authenticationApi.getUserDetails();
+        const lenderId = userDetails?.lender_id;
+        
+        if (!lenderId) {
+          setError('No lender ID found for the current user.');
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch statistics with lender_id
+        const data = await invoiceApi.getInvoiceStatistics(selectedYear, lenderId);
         setStatisticsData(data);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch statistics');

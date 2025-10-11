@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import React from "react";
-import MonthlyTarget from "@/components/ecommerce/manager/MonthlyTarget";
-import MonthlySalesChart from "@/components/ecommerce/manager/MonthlySalesChart";
-import StatisticsChart from "@/components/ecommerce/manager/StatisticsChart";
+import MonthlyTarget from "./components/dashboard/MonthlyTarget";
+import MonthlySalesChart from "./components/dashboard/MonthlySalesChart";
+import StatisticsChart from "./components/dashboard/StatisticsChart";
 
 export const metadata: Metadata = {
   title: "Manager Dashboard | InvoSafe - Invoice Management System",

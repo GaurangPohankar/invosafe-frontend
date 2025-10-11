@@ -334,14 +334,36 @@ export const invoiceApi = {
     return Array.isArray(data) && data.length > 0;
   },
 
-  async getInvoiceStatistics(year: number): Promise<{ series: Array<{ name: string; data: number[] }> }> {
+  async getInvoiceStatistics(
+    year: number,
+    lenderId?: number,
+    userId?: number,
+    status?: string
+  ): Promise<{ series: Array<{ name: string; data: number[] }> }> {
     const accessToken = localStorage.getItem('access_token');
     
     if (!accessToken) {
       throw new Error('No access token found');
     }
 
-    const response = await fetch(`${API_BASE_URL}/invoice/statistics/${year}`, {
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    if (lenderId !== undefined) {
+      queryParams.append('lender_id', lenderId.toString());
+    }
+    if (userId !== undefined) {
+      queryParams.append('user_id', userId.toString());
+    }
+    if (status !== undefined && status !== '') {
+      queryParams.append('status', status);
+    }
+
+    const queryString = queryParams.toString();
+    const url = queryString 
+      ? `${API_BASE_URL}/invoice/statistics/${year}?${queryString}`
+      : `${API_BASE_URL}/invoice/statistics/${year}`;
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
