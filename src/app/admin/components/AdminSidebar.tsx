@@ -12,6 +12,7 @@ import {
   TableIcon,
   PlugInIcon,
   DollarLineIcon,
+  BoxCubeIcon,
 } from "@/icons/index";
 import AdminSidebarWidget from "./AdminSidebarWidget";
 
@@ -31,16 +32,16 @@ const adminNavItems: NavItem[] = [
     roles: ["ADMIN"],
   },
   {
-    icon: <TableIcon />,
-    name: "Invoices",
-    path: "/admin/invoices",
-    roles: ["ADMIN"],
-  },
-  {
     icon: <UserCircleIcon />,
     name: "Users",
     path: "/admin/users",
     roles: ["ADMIN"], // Only admins can access users
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: "Lenders",
+    path: "/admin/lenders",
+    roles: ["ADMIN"], // Only admins can access lenders
   },
   {
     icon: <PlugInIcon />,
