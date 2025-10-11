@@ -7,6 +7,7 @@ interface LoginResponse {
   role: string;
   lender_id: number;
   lender_name: string;
+  status: string;
 }
 
 interface LoginCredentials {
@@ -27,6 +28,7 @@ interface PasswordResetVerify {
 interface PasswordResetResponse {
   message: string;
   success: boolean;
+  status?: string;
 }
 
 interface PasswordUpdateRequest {
@@ -66,6 +68,11 @@ export const authenticationApi = {
 
     const data: LoginResponse = await response.json();
     
+    // Check if user is blocked
+    if (data.status && data.status !== 'active') {
+      throw new Error('Your account has been blocked. Please contact the administrator.');
+    }
+    
     // Store authentication data in localStorage
     localStorage.setItem('access_token', data.access_token);
     localStorage.setItem('token_type', data.token_type);
@@ -75,6 +82,7 @@ export const authenticationApi = {
     localStorage.setItem('role', data.role);
     localStorage.setItem('lender_id', data.lender_id.toString());
     localStorage.setItem('lender_name', data.lender_name);
+    localStorage.setItem('status', data.status);
     
     return data;
   },
@@ -107,6 +115,7 @@ export const authenticationApi = {
     localStorage.removeItem('role');
     localStorage.removeItem('lender_id');
     localStorage.removeItem('lender_name');
+    localStorage.removeItem('status');
   },
 
   getStoredAuthData(): {
@@ -118,6 +127,7 @@ export const authenticationApi = {
     role: string | null;
     lender_id: number | null;
     lender_name: string | null;
+    status: string | null;
   } {
     return {
       access_token: localStorage.getItem('access_token'),
@@ -128,6 +138,7 @@ export const authenticationApi = {
       role: localStorage.getItem('role'),
       lender_id: localStorage.getItem('lender_id') ? parseInt(localStorage.getItem('lender_id')!) : null,
       lender_name: localStorage.getItem('lender_name'),
+      status: localStorage.getItem('status'),
     };
   },
 
@@ -145,7 +156,14 @@ export const authenticationApi = {
       throw new Error('Failed to send password reset email');
     }
 
-    return response.json();
+    const data: PasswordResetResponse = await response.json();
+    
+    // Check if user is blocked
+    if (data.status && data.status !== 'active') {
+      throw new Error('Your account has been blocked. Please contact the administrator.');
+    }
+    
+    return data;
   },
 
   async verifyPasswordReset(email: string, otp: string, newPassword: string): Promise<PasswordResetResponse> {
@@ -214,6 +232,7 @@ export const authenticationApi = {
     role: string | null;
     lender_id: number | null;
     lender_name: string | null;
+    status: string | null;
   } {
     return {
       access_token: localStorage.getItem('access_token'),
@@ -224,6 +243,7 @@ export const authenticationApi = {
       role: localStorage.getItem('role'),
       lender_id: localStorage.getItem('lender_id') ? parseInt(localStorage.getItem('lender_id')!) : null,
       lender_name: localStorage.getItem('lender_name'),
+      status: localStorage.getItem('status'),
     };
   },
   

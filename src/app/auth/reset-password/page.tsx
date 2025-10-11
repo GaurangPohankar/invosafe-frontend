@@ -28,8 +28,9 @@ export default function ResetPasswordPage() {
       await authenticationApi.requestPasswordReset(email);
       setIsOtpSent(true);
       setSuccess("OTP sent successfully to your email");
-    } catch (error) {
-      setError("Failed to send OTP. Please check your email and try again.");
+    } catch (error: any) {
+      // Show the specific error message (including blocked account message)
+      setError(error.message || "Failed to send OTP. Please check your email and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -56,8 +57,9 @@ export default function ResetPasswordPage() {
       await authenticationApi.verifyPasswordReset(email, otp, newPassword);
       setIsPasswordReset(true);
       setSuccess("Password reset successfully");
-    } catch (error) {
-      setError("Invalid OTP or failed to reset password. Please try again.");
+    } catch (error: any) {
+      // Show the specific error message
+      setError(error.message || "Invalid OTP or failed to reset password. Please try again.");
     } finally {
       setIsLoading(false);
     }

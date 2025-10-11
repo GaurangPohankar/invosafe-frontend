@@ -48,8 +48,9 @@ export default function SignInPage() {
             router.push("/manager");
             break;
       }
-    } catch (error) {
-      setError("Invalid email or password. Please try again.");
+    } catch (error: any) {
+      // Show the specific error message (including blocked account message)
+      setError(error.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }

@@ -113,8 +113,12 @@ export default function UserTable({
     refreshData();
   }, [refreshTrigger]);
 
-  // Filter logic - for search functionality
+  // Filter logic - for search functionality and exclude current user
+  const currentUserEmail = localStorage.getItem('email');
   const filteredUsers = users.filter(u => {
+    // Exclude current user
+    if (u.email === currentUserEmail) return false;
+    // Search filter
     if (search && !u.name.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });

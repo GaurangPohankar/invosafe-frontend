@@ -71,21 +71,34 @@ export const userApi = {
     return await response.json();
   },
 
-  async getUsersByStatus(status?: string): Promise<User[]> {
+  async getUsersByStatus(status?: string, role?: string, filterByLender: boolean = true): Promise<User[]> {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
       throw new Error('No access token found');
     }
     
-    const lenderId = localStorage.getItem('lender_id');
-    if (!lenderId) {
-      throw new Error('No lender ID found');
+    const queryParams = new URLSearchParams();
+    
+    // Only filter by lender_id if filterByLender is true (for manager/user, not admin)
+    if (filterByLender) {
+      const lenderId = localStorage.getItem('lender_id');
+      if (lenderId) {
+        queryParams.append('lender_id', lenderId);
+      }
+    }
+    
+    if (status) {
+      queryParams.append('status', status);
+    }
+    
+    if (role) {
+      queryParams.append('role', role);
     }
 
-    let url = `${API_BASE_URL}/user/?role=USER&lender_id=${lenderId}`;
-    if (status) {
-      url += `&status=${status}`;
-    }
+    const queryString = queryParams.toString();
+    const url = queryString 
+      ? `${API_BASE_URL}/user?${queryString}`
+      : `${API_BASE_URL}/user`;
 
     const response = await fetch(url, {
       method: 'GET',
